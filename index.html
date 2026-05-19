@@ -406,11 +406,11 @@
             <span class="arch-name">Apple Silicon</span>
             <span class="opt-arrow">→</span>
           </a>
-          <a href="javascript:void(0)" data-arch="x64" class="opt opt-x64" onclick="alert('Intel 版即将发布，敬请期待 🚧');">
+          <a href="https://github.com/LiangLuDev/BiXian-AI-Novel/releases/latest/download/BiXianAssistant-1.0.0-x64.dmg" data-arch="x64" class="opt opt-x64">
             <span class="opt-icon">
               <svg viewBox="0 0 24 24"><path d="M4 5h16v10H4z" opacity=".3"/><path d="M8 19h8M12 15v4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
             </span>
-            <span class="arch-name">Intel <span style="font-size:10px; padding:1px 6px; border:1px solid currentColor; border-radius:4px; opacity:.7; margin-left:6px;">SOON</span></span>
+            <span class="arch-name">Intel</span>
             <span class="opt-arrow">→</span>
           </a>
         </div>
@@ -496,15 +496,21 @@
     return arch;
   }
 
+  const DL_ARM = 'https://github.com/LiangLuDev/BiXian-AI-Novel/releases/latest/download/BiXianAssistant-1.0.0-arm64.dmg';
+  const DL_X64 = 'https://github.com/LiangLuDev/BiXian-AI-Novel/releases/latest/download/BiXianAssistant-1.0.0-x64.dmg';
+
   detectArch().then(arch => {
     const macArchEl = document.getElementById('mac-arch');
+    const mainLink = document.getElementById('dl-mac-link');
     const armOpt = document.querySelector('.opt-arm');
     const x64Opt = document.querySelector('.opt-x64');
     if (arch === 'arm64') {
       macArchEl.textContent = 'Apple Silicon';
-      armOpt.style.display = 'none'; // 隐藏当前架构，下拉只显示另一个
+      mainLink.href = DL_ARM;
+      armOpt.style.display = 'none';
     } else {
       macArchEl.textContent = 'Intel';
+      mainLink.href = DL_X64;
       x64Opt.style.display = 'none';
     }
   });

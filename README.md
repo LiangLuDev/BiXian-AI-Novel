@@ -4,11 +4,6 @@
 
 一个 AI 全自动写作工作台。一句简介、一个类型、一个章节数，其余的世界观、人物、大纲、章节正文，全部交给 AI。
 
-## 下载
-
-- macOS · Apple Silicon: [最新版本](https://github.com/LiangLuDev/BiXian-AI-Novel/releases/latest)
-- macOS · Intel / Windows / Linux: 即将推出
-
 ## 特性
 
 - 免费使用

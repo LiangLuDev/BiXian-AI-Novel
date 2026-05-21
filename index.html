@@ -182,7 +182,6 @@
   .dl.primary .dl-icon svg { fill: var(--green); }
   .dl.primary .dl-tag { color: var(--green); }
   .dl.disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
-
   .dl-icon {
     width: 36px; height: 36px;
     display: flex; align-items: center; justify-content: center;
@@ -297,6 +296,31 @@
     box-shadow: 0 0 10px var(--green);
   }
 
+  .github-link {
+    position: fixed; top: 32px; right: 80px;
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    color: var(--ink);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.025);
+    text-decoration: none;
+    z-index: 50;
+    opacity: 0;
+    animation: rise 1s .15s cubic-bezier(.2,.8,.2,1) forwards;
+    transition: transform .25s cubic-bezier(.2,.8,.2,1), border-color .25s, background .25s, color .25s;
+  }
+  .github-link:hover {
+    transform: translateY(-2px);
+    color: var(--green);
+    border-color: rgba(94,240,163,0.35);
+    background: rgba(94,240,163,0.06);
+  }
+  .github-link svg {
+    width: 22px; height: 22px;
+    fill: currentColor;
+  }
+
   /* === 右侧漂浮插图 === */
   .floaters {
     position: absolute; inset: 0; pointer-events: none;
@@ -365,6 +389,7 @@
     .f1, .f2, .f3 { width: 280px; }
     .f2 { right: 6%; }
     .brand { left: 32px; }
+    .github-link { right: 32px; }
     main { padding: 0 32px; }
   }
   @media (max-width: 900px) {
@@ -377,6 +402,7 @@
     .f3 { top: 160px; right: 20px; }
     .downloads { flex-direction: column; }
     .dl { width: 100%; }
+    .github-link { top: 32px; right: 24px; }
   }
 </style>
 </head>
@@ -389,6 +415,10 @@
   <img src="assets/app-icon.png" alt="笔仙助手" />
   <div class="brand-name">笔仙助手</div>
 </div>
+
+<a class="github-link" href="https://github.com/LiangLuDev/BiXian-AI-Novel" target="_blank" rel="noopener noreferrer" aria-label="GitHub 仓库" title="GitHub 仓库">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.15c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.75 2.69 1.24 3.34.95.1-.74.4-1.24.73-1.53-2.55-.29-5.23-1.28-5.23-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.16 1.18.92-.26 1.9-.38 2.88-.39.98 0 1.96.13 2.88.39 2.2-1.49 3.16-1.18 3.16-1.18.62 1.58.23 2.75.11 3.04.74.8 1.18 1.83 1.18 3.08 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.13v3.16c0 .31.21.67.79.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
+</a>
 
 <main>
   <section class="hero">

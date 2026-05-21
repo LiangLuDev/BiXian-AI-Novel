@@ -1,0 +1,149 @@
+{
+  "name": "bixian-assistant",
+  "version": "1.2.0",
+  "description": "笔仙助手 - 本地小说生成桌面应用",
+  "author": {
+    "name": "Liang Lu",
+    "email": "liangludev@gmail.com"
+  },
+  "main": "electron/main.cjs",
+  "bin": {
+    "bixian": "src/cli.mjs"
+  },
+  "scripts": {
+    "build:static": "node scripts/build-static.mjs",
+    "build:themes": "node scripts/build-themes.mjs",
+    "start": "npm run build:static && electron .",
+    "build:mac": "npm run build:static && electron-builder --mac",
+    "build:mac-dmg": "npm run build:static && electron-builder --mac dmg",
+    "build:win": "npm run build:static && electron-builder --win",
+    "build:linux": "npm run build:static && electron-builder --linux",
+    "convert:blocks": "node scripts/convert-blocks-to-md.mjs",
+    "convert:prompts": "node scripts/convert-prompts-to-md.mjs",
+    "dump:prompts": "node scripts/dump-prompt-snapshot.mjs",
+    "verify:prompts": "node scripts/verify-md-byte-exact.mjs",
+    "test:node": "node test/node-smoke.mjs",
+    "bixian": "node src/cli.mjs"
+  },
+  "build": {
+    "appId": "do.bixian.assistant",
+    "productName": "笔仙助手",
+    "copyright": "© 2026 笔仙助手",
+    "directories": {
+      "output": "dist"
+    },
+    "asar": true,
+    "afterAllArtifactBuild": "scripts/electron-after-all.cjs",
+    "asarUnpack": [
+      "src/**",
+      "bixian/**",
+      "data/**",
+      "scripts/**"
+    ],
+    "files": [
+      "electron/**/*",
+      "src/**/*",
+      "bixian/**/*",
+      "data/**/*",
+      "scripts/prompt-utils.mjs",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "electron/entitlements.mac.plist",
+      "entitlementsInherit": "electron/entitlements.mac.plist",
+      "extendInfo": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      },
+      "notarize": true
+    },
+    "dmg": {
+      "title": "笔仙助手 ${version}",
+      "contents": [
+        {
+          "x": 130,
+          "y": 220,
+          "type": "file"
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-${arch}-portable.${ext}"
+    },
+    "linux": {
+      "icon": "build/icon.png",
+      "category": "Office",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    }
+  },
+  "overrides": {
+    "@electron/osx-sign": {
+      "isbinaryfile": "^5.0.0"
+    }
+  },
+  "devDependencies": {
+    "@electron/notarize": "^3.1.1",
+    "electron": "^42.1.0",
+    "electron-builder": "^26.8.1",
+    "esbuild": "^0.28.0"
+  }
+}

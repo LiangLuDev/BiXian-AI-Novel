@@ -1,2 +1,12 @@
 .DS_Store
 node_modules/
+.runtime/
+/dist/
+build/icon-clean.png
+*.log
+.claude/
+
+# Defensive: signed release pipeline lives in BiXian-AI-Novel-Private repo;
+# if anything ever drops here it should not be committed.
+.env.release
+.env.release.local

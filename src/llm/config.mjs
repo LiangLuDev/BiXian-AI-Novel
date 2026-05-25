@@ -18,6 +18,8 @@ export class LLMConfig {
       model_image: 'gpt-5.4-mini',
       timeout: 600_000,
       timeout_long: 1_200_000,
+      max_turns: 1,
+      max_turns_long: 10,
       // Provider-specific options live here. CLI providers read binary/sandbox/etc.;
       // API providers will read apiKey/baseUrl/etc. Unknown keys are ignored.
       extra: {},
@@ -93,6 +95,8 @@ const PROVIDER_FACTORIES = {
     return new ClaudeCliProvider({
       binary: explicit ?? resolved?.launchPath ?? 'claude',
       extra_args: cfg.extra_args ?? cfg.extra.extra_args ?? [],
+      max_turns: cfg.extra.max_turns ?? cfg.max_turns,
+      max_turns_long: cfg.extra.max_turns_long ?? cfg.max_turns_long,
     });
   },
   gemini: (cfg) => {

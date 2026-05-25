@@ -47,11 +47,14 @@ export function runAsync(cmd, args, { input, cwd, timeout, agentName = 'agent', 
     child.stdout.on('data', (c) => { stdout += c.toString('utf8'); });
     child.stderr.on('data', (c) => { stderr += c.toString('utf8'); });
     child.on('error', (e) => {
-      finish(reject, new LLMError(`${agentName} spawn failed: ${e.message}`));
+      finish(reject, new LLMError(`${agentName} spawn failed: ${e.message}`, { stdout, stderr, cause: e }));
     });
     child.on('close', (code) => {
       if (code === 0) finish(resolve, { stdout, stderr, code });
-      else finish(reject, new LLMError(`${agentName} failed (exit ${code}): ${stderr.slice(-1000) || stdout.slice(-1000)}`));
+      else {
+        const tail = stderr.slice(-1000) || stdout.slice(-1000);
+        finish(reject, new LLMError(`${agentName} failed (exit ${code}): ${tail}`, { stdout, stderr, code }));
+      }
     });
 
     if (input != null) {

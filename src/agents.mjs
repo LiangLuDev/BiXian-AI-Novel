@@ -1,6 +1,6 @@
 import { loadPromptWithBlocks } from './prompts.mjs';
 import { setupVars, renderPair } from './agents-common.mjs';
-import { Character, CharacterRelation, Chapter, ChapterDesign, PublishMeta, StyleGuide, Volume } from './state.mjs';
+import { Character, CharacterRelation, Chapter, ChapterDesign, PublishMeta, StyleGuide, Volume, chapterBodyCjkCount, chapterBodyIssue } from './state.mjs';
 import { DEFAULT_ANTI_AI_TELLS } from './blocks.mjs';
 import { LIMITS as FANQIE_LIMITS, MAIN_CATEGORIES, PLOTS, ROLES, THEMES, fanqieValidIds } from './services/fanqie_tags.mjs';
 
@@ -48,17 +48,56 @@ function parseRelations(md) {
 
 function parseChapterDesigns(md) {
   const out = [];
-  const sections = String(md || '').split(/(?=^##\s*第?\d+\s*[章节回]?)/gmu);
-  for (const section of sections) {
-    const m = section.match(/^##\s*第?(\d+)\s*[章节回]?\s*[：:、.\-\s]*(.*)$/mu);
-    if (!m) continue;
-    out.push(new ChapterDesign({
-      order: Number(m[1]),
-      title: (m[2] || '').trim() || null,
-      raw: section.trim(),
-    }));
+  const markdownHeading = /^\s*#{1,6}\s*(?:[-*]\s*)?(?:\*\*)?第?\s*(\d+)\s*[章节回]?\s*(?:\*\*)?\s*[：:、.\-\s]*(.*?)\s*(?:\*\*)?\s*$/u;
+  const chineseHeading = /^\s*(?:[-*]\s*)?(?:\*\*)?第\s*(\d+)\s*[章节回]\s*(?:\*\*)?\s*[：:、.\-\s]*(.*?)\s*(?:\*\*)?\s*$/u;
+  let current = null;
+  for (const line of String(md || '').split(/\r?\n/u)) {
+    const m = line.match(markdownHeading) || line.match(chineseHeading);
+    if (m) {
+      if (current) out.push(current);
+      current = { order: Number(m[1]), title: (m[2] || '').replace(/\*\*/gu, '').trim(), lines: [line] };
+      continue;
+    }
+    if (current) current.lines.push(line);
   }
-  return out.sort((a, b) => a.order - b.order);
+  if (current) out.push(current);
+  return out.map((section) => {
+    const raw = section.lines.join('\n').trim();
+    return new ChapterDesign({
+      order: section.order,
+      title: section.title || null,
+      raw,
+    });
+  }).sort((a, b) => a.order - b.order);
+}
+
+function lengthRevisionNotes(issue, cjk, setup) {
+  const min = Number(setup?.per_chapter_min || 0);
+  const max = Number(setup?.per_chapter_max || min);
+  const target = setup?.per_chapter_target || Math.floor((min + max) / 2);
+  if (/too short/u.test(issue)) {
+    const stretchTarget = Math.min(max, Math.max(target, min + Math.floor((max - min) * 0.7)));
+    const need = Math.max(600, stretchTarget - cjk);
+    return [
+      `当前正文约 ${cjk} 个中文正文字符，低于最低 ${min}。`,
+      `请在不改变主线事件的前提下，至少补充 ${need} 个中文正文字符，最终控制在 ${min}-${max}，优先贴近 ${stretchTarget}，不要只贴着最低线补写。`,
+      '补写只能扩展本章分章设计与原文已经出现的场景、动作、对话和即时反应；禁止新增场景、人物、设定、时间跳跃或支线事件来凑字数。',
+      '优先扩写：关键动作过程、对话交锋、诊疗/推理/决策细节、人物即时反应；禁止水文、禁止重复上一段信息。',
+    ].join('\n');
+  }
+  if (/too long/u.test(issue)) {
+    const cut = Math.max(300, cjk - max + 200);
+    return [
+      `当前正文约 ${cjk} 个中文正文字符，超过最高 ${max}。`,
+      `请在保留主线事件完整的前提下，至少删减 ${cut} 个中文正文字符，最终控制在 ${min}-${max}，尽量贴近 ${target}。`,
+      '优先删除：重复解释、环境铺陈、旁支细节、同义反复；保留冲突推进和结尾钩子。',
+    ].join('\n');
+  }
+  return [
+    `当前正文无效：${issue}`,
+    `请重新输出完整正文，最终控制在 ${min}-${max} 个中文正文字符之间，尽量贴近 ${target}。`,
+    '只输出正文，不要标题、字数统计、JSON、元信息或解释。',
+  ].join('\n');
 }
 
 // ---------- setup-phase agents ----------
@@ -153,16 +192,62 @@ export async function chapterDesignFullAgent(state, llm) {
   const [sys, usr] = renderPair(P('chapter_design/full_system'), P('chapter_design/full_user'), setupVars(state));
   const md = await llm.chat(sys, usr, { agentName: 'chapter_design_full', longForm: true });
   state.chapter_designs = parseChapterDesigns(md);
+  state.assertChapterDesignsReady({ toChapter: state.setup.target_chapters });
+  return state;
+}
+
+export async function chapterDesignRangeAgent(state, llm, { startChapter, endChapter } = {}) {
+  const start = Math.max(1, Number(startChapter || 1));
+  const end = Math.max(start, Number(endChapter || start));
+  const vars = setupVars(state, {
+    start_chapter: start,
+    end_chapter: end,
+    batch_count: end - start + 1,
+    previous_designs: state.chapterDesignsText({ beforeChapter: start, limit: 5 }) || '（暂无前置分章设计）',
+  });
+  const [sys, usr] = renderPair(P('chapter_design/range_system'), P('chapter_design/range_user'), vars);
+  const md = await llm.chat(sys, usr, { agentName: `chapter_design_range[${start}-${end}]`, longForm: true });
+  const designs = parseChapterDesigns(md);
+  const outOfRange = designs.filter((d) => d.order < start || d.order > end).map((d) => d.order);
+  if (outOfRange.length) {
+    throw new Error(`chapter design range ${start}-${end} returned out-of-range chapters: ${outOfRange.join(', ')}`);
+  }
+  const seen = new Set();
+  const duplicates = [];
+  for (const d of designs) {
+    if (seen.has(d.order)) duplicates.push(d.order);
+    seen.add(d.order);
+  }
+  const missing = [];
+  const empty = [];
+  for (let order = start; order <= end; order += 1) {
+    const design = designs.find((d) => d.order === order);
+    if (!design) missing.push(order);
+    else if (!String(design.raw || design.plot || design.highlight || '').trim()) empty.push(order);
+  }
+  const parts = [];
+  if (missing.length) parts.push(`missing: ${missing.join(', ')}`);
+  if (empty.length) parts.push(`empty: ${empty.join(', ')}`);
+  if (duplicates.length) parts.push(`duplicates: ${duplicates.join(', ')}`);
+  if (parts.length) {
+    throw new Error(`chapter design range ${start}-${end} invalid (${parts.join('; ')})`);
+  }
+  state.replaceChapterDesignRange(start, end, designs);
+  state.assertChapterDesignsReady({ fromChapter: start, toChapter: end });
   return state;
 }
 
 export async function chapterBodyAgent(state, llm, order) {
-  const design = state.chapterDesignFor(order) || new ChapterDesign({ order, title: `第${order}章` });
+  const design = state.chapterDesignFor(order);
+  const designText = state.chapterDesignTextFor(order);
+  if (!design || !designText) {
+    throw new Error(`chapter ${order} has no chapter design; run/fix design generation before writing`);
+  }
   const vars = setupVars(state, {
     chapter_order: order,
     chapter_order_next: order + 1,
     chapter_title: design.title || '',
-    chapter_design_text: design.raw || design.plot || design.highlight || '',
+    chapter_design_text: designText,
     progress_context: `第${order}/${state.setup.target_chapters}章`,
     prev_chapter_block: state.prevChapterEnding(order),
     recent_summaries_block: state.recentChapterSummaries(),
@@ -171,10 +256,42 @@ export async function chapterBodyAgent(state, llm, order) {
     arcs_block: state.arcs,
   });
   const [sys, usr] = renderPair(P('chapter/system_base'), P('chapter/user'), vars);
-  const body = await llm.chat(sys, usr, { agentName: 'chapter_body', longForm: true });
-  const cjk = [...body].filter((c) => c >= '一' && c <= '鿿').length;
-  state.chapters.push(new Chapter({ order, design, body, word_count: cjk }));
-  return state;
+  const reviseSysTemplate = P('chapter/revise_system');
+  const reviseUsrTemplate = P('chapter/revise_user');
+  const attempts = 8;
+  let lastIssue = '';
+  let lastBody = '';
+  let lastCjk = 0;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const canRevise = attempt > 1 && lastBody.trim() && !/empty body|CLI result envelope/u.test(lastIssue);
+    const [attemptSys, attemptUsr] = canRevise
+      ? renderPair(reviseSysTemplate, reviseUsrTemplate, {
+          ...vars,
+          original_body: lastBody,
+          revision_notes: lengthRevisionNotes(lastIssue, lastCjk, state.setup),
+        })
+      : [sys, `${usr}${lastIssue ? `\n\n【上一次正文无效，必须重新生成】\n失败原因：${lastIssue}\n${lengthRevisionNotes(lastIssue, lastCjk, state.setup)}` : ''}`];
+    const body = canRevise
+      ? await llm.chat(attemptSys, attemptUsr, { agentName: `chapter_body_revise_${attempt}`, longForm: true })
+      : await llm.chat(
+          attemptSys,
+          attemptUsr,
+          { agentName: attempt === 1 ? 'chapter_body' : `chapter_body_retry_${attempt}`, longForm: true },
+        );
+    const cjk = chapterBodyCjkCount(body);
+    const chapter = new Chapter({ order, design, body, word_count: cjk });
+    const issue = chapterBodyIssue(chapter, state.setup, { strictRange: true });
+    if (!issue) {
+      state.chapters = state.chapters.filter((c) => c.order !== order);
+      state.chapters.push(chapter);
+      state.chapters.sort((a, b) => a.order - b.order);
+      return state;
+    }
+    lastIssue = issue;
+    lastBody = body;
+    lastCjk = cjk;
+  }
+  throw new Error(`chapter ${order} body invalid after ${attempts} attempts: ${lastIssue}`);
 }
 
 export async function coverAgent(state, llm) {

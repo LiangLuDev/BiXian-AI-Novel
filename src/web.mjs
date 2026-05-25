@@ -3,8 +3,9 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { NovelProject } from './project.mjs';
-import { NovelState, ProjectSetup, PublishMeta } from './state.mjs';
+import { NovelState, ProjectSetup, PublishMeta, isChapterBodyValid } from './state.mjs';
 import { LLM, LLMConfig, detectAiBackends, aiCapabilityError } from './llm/index.mjs';
+import { KNOWN_BACKENDS } from './llm/config.mjs';
 import { usageSummary } from './services/costing.mjs';
 import { fanqieTagPayload } from './services/fanqie_tags.mjs';
 import { publishMetaAgent } from './agents.mjs';
@@ -134,7 +135,45 @@ function inferAudience(state) {
   return '';
 }
 
+function normalizeAiSettings(body = {}, currentBackend = '') {
+  const backend = String(body.backend || currentBackend || '').trim();
+  if (!backend) return null;
+  if (!KNOWN_BACKENDS.includes(backend)) {
+    const known = KNOWN_BACKENDS.join(', ');
+    throw new Error(`unknown backend "${backend}" (known: ${known})`);
+  }
+  return {
+    backend,
+    model: String(body.model || '').trim(),
+  };
+}
+
+function applyAiSettings(project, body, registry, projectId) {
+  const currentState = project.load();
+  const settings = normalizeAiSettings(body, currentState.setup.backend || 'codex');
+  if (!settings) return null;
+  const capErr = aiCapabilityError(settings.backend);
+  if (capErr) {
+    capErr.statusCode = 412;
+    capErr.backend = settings.backend;
+    throw capErr;
+  }
+  currentState.setup.backend = settings.backend;
+  currentState.setup.model = settings.model;
+  project.save(currentState);
+  registry.bus.emit('event', {
+    type: 'state_updated',
+    project_id: projectId,
+    ts: Date.now(),
+    backend: settings.backend,
+    model: settings.model,
+  });
+  return { state: currentState, ...settings };
+}
+
 function stateSummary(state) {
+  const validChapters = state.chapters.filter((c) => isChapterBodyValid(c, state.setup));
+  const invalidChapters = state.chapters.length - validChapters.length;
   return {
     title: state.setup.title || '未命名',
     target_chapters: state.setup.target_chapters || 0,
@@ -148,8 +187,9 @@ function stateSummary(state) {
     secondary_chars: state.secondary_characters.length,
     relations: state.relations.length,
     designs: state.chapter_designs.length,
-    chapters: state.chapters.length,
-    total_words: state.chapters.reduce((sum, c) => sum + Number(c.word_count || 0), 0),
+    chapters: validChapters.length,
+    invalid_chapters: invalidChapters,
+    total_words: validChapters.reduce((sum, c) => sum + Number(c.word_count || 0), 0),
     proposed_titles: state.titles_proposed || [],
     cover_prompt: state.cover_prompt || '',
     cover_image_path: state.cover_image_path || '',
@@ -186,6 +226,7 @@ function projectSummary(workspace, id, activeId, registry) {
     genre: state.setup.genre || '通用',
     audience: inferAudience(state),
     backend: state.setup.backend || 'codex',
+    model: state.setup.model || '',
     style: state.setup.literary_style || '',
     description: state.setup.description || '',
     created_at: state.created_at,
@@ -231,6 +272,7 @@ function statePayload(state, { workspace, projectId, activeId, registry }) {
     project_id: projectId,
     active_project_id: activeId,
     backend: state.setup.backend || 'codex',
+    model: state.setup.model || '',
     global_running: sum.running_count > 0,
     running_count: sum.running_count,
     queued_count: sum.queued_count,
@@ -269,7 +311,7 @@ function designsPayload(state) {
       plot: d.plot || '',
       emotional_tone: d.emotional_tone || '',
       ending_hook: d.ending_hook || '',
-      status: c ? 'written' : existingDesign ? 'designed' : 'pending',
+      status: c ? (isChapterBodyValid(c, state.setup) ? 'written' : 'invalid') : existingDesign ? 'designed' : 'pending',
       word_count: c?.word_count || 0,
     });
   }
@@ -279,6 +321,7 @@ function designsPayload(state) {
 function chapterPayload(state, order) {
   const c = state.chapters.find((x) => x.order === order);
   if (c) {
+    const valid = isChapterBodyValid(c, state.setup);
     return {
       order: c.order,
       title: c.design?.title || `第${c.order}章`,
@@ -290,7 +333,7 @@ function chapterPayload(state, order) {
       new_characters: c.new_characters || [],
       relations_delta: c.relations_delta || [],
       revisions: c.revisions?.length || 0,
-      status: 'written',
+      status: valid ? 'written' : 'invalid',
     };
   }
   const d = state.chapterDesignFor(order);
@@ -406,6 +449,27 @@ export function runServer(projectDir, { host = '127.0.0.1', port = 8000 } = {}) 
         return send(res, 200, { ok: true, title: st.setup.title });
       }
 
+      const aiSettings = pathname.match(/^\/api\/projects\/([^/]+)\/ai-backend$/u);
+      if (method === 'POST' && aiSettings) {
+        const id = decodeURIComponent(aiSettings[1]);
+        const body = await readBody(req);
+        if (!body.backend && !Object.prototype.hasOwnProperty.call(body, 'model')) {
+          return send(res, 400, { detail: 'backend or model required' });
+        }
+        try {
+          const result = applyAiSettings(new NovelProject(resolveProject(workspace, id)), body, registry, id);
+          return send(res, 200, {
+            ok: true,
+            backend: result.backend,
+            model: result.model,
+            running: registry.stateOf(id).running,
+            queued: registry.stateOf(id).queued,
+          });
+        } catch (e) {
+          return send(res, e.statusCode || 400, { detail: e.message, code: e.statusCode === 412 ? 'ai_unavailable' : 'bad_ai_backend', backend: e.backend || body.backend || '' });
+        }
+      }
+
       const cover = pathname.match(/^\/api\/projects\/([^/]+)\/cover$/u);
       if (method === 'GET' && cover) {
         const id = decodeURIComponent(cover[1]);
@@ -498,11 +562,20 @@ export function runServer(projectDir, { host = '127.0.0.1', port = 8000 } = {}) 
 
       // ----- pipeline control -----
       if (method === 'POST' && pathname === '/api/run') {
-        const capErr = aiCapabilityError();
-        if (capErr) return send(res, 412, { detail: capErr.message, code: 'ai_unavailable' });
         const body = await readBody(req);
         const pid = body.project_id || activeId;
         if (!pid) return send(res, 400, { detail: 'no project_id' });
+        if (body.backend || Object.prototype.hasOwnProperty.call(body, 'model')) {
+          try {
+            applyAiSettings(new NovelProject(resolveProject(workspace, pid)), body, registry, pid);
+          } catch (e) {
+            return send(res, e.statusCode || 400, { detail: e.message, code: e.statusCode === 412 ? 'ai_unavailable' : 'bad_ai_backend', backend: e.backend || body.backend || '' });
+          }
+        } else {
+          const stForBackend = requireState(workspace, pid);
+          const capErr = aiCapabilityError(stForBackend.setup.backend || null);
+          if (capErr) return send(res, 412, { detail: capErr.message, code: 'ai_unavailable', backend: stForBackend.setup.backend || '' });
+        }
         const st = registry.enqueue(pid, {
           mode: body.mode || 'all',
           fromChapter: Number(body.from || 1),

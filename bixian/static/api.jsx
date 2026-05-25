@@ -24,6 +24,7 @@ const api = {
   projects: () => api.getJSON("/api/projects"),
   activate: (id) => api.postJSON(`/api/projects/${encodeURIComponent(id)}/activate`),
   renameProject: (id, title) => api.postJSON(`/api/projects/${encodeURIComponent(id)}/title`, { title }),
+  updateAiBackend: (id, body) => api.postJSON(`/api/projects/${encodeURIComponent(id)}/ai-backend`, body),
   deleteProject: (id) => api.postJSON(`/api/projects/${encodeURIComponent(id)}/delete`),
   state: (projectId) => api.getJSON(`/api/state${api.projectQuery(projectId)}`),
   init: (body) => api.postJSON("/api/init", body),

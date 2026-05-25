@@ -1,8 +1,9 @@
 import path from 'node:path';
 import { estimateEntryCost } from './services/costing.mjs';
 import { NovelProject } from './project.mjs';
+import { isChapterBodyValid } from './state.mjs';
 import {
-  bookTitleAgent, chapterBodyAgent, chapterDesignFullAgent, coverAgent, coverImageAgent,
+  bookTitleAgent, chapterBodyAgent, chapterDesignFullAgent, chapterDesignRangeAgent, coverAgent, coverImageAgent,
   mainArcsAgent, mainCharsAgent, outlineAgent, relationsAgent,
   secondaryArcsAgent, secondaryCharsAgent, styleGuideAgent, themeAgent, volumeAgent, worldAgent,
 } from './agents.mjs';
@@ -12,6 +13,8 @@ export class PipelineOptions {
     Object.assign(this, {
       autosavePath: null,
       chapterCountOverride: null,
+      chapterDesignBatchSize: 25,
+      chapterDesignFullLimit: 80,
       generateCoverImage: false,
       controller: null,
     }, data);
@@ -73,6 +76,28 @@ const SETUP_STEPS = [
   ['book_title', bookTitleAgent],
 ];
 
+function missingOrInvalidRanges(state, target) {
+  const issues = state.chapterDesignIssues({ toChapter: target });
+  const orders = [...new Set([...issues.missing, ...issues.empty, ...issues.duplicates])]
+    .filter((n) => n >= 1 && n <= target)
+    .sort((a, b) => a - b);
+  if (!orders.length) return [];
+  const ranges = [];
+  let start = orders[0];
+  let prev = orders[0];
+  for (const order of orders.slice(1)) {
+    if (order === prev + 1) {
+      prev = order;
+      continue;
+    }
+    ranges.push([start, prev]);
+    start = order;
+    prev = order;
+  }
+  ranges.push([start, prev]);
+  return ranges;
+}
+
 export class Orchestrator {
   constructor(llm, options = new PipelineOptions()) {
     this.llm = llm;
@@ -116,8 +141,28 @@ export class Orchestrator {
 
   async runDesign(state) {
     this.controller?.emit('phase_started', { phase: 'design' });
-    await this._runAgent('chapter_design_full', chapterDesignFullAgent, state);
+    const target = Number(state.setup.target_chapters || 0);
+    const fullLimit = Number(this.options.chapterDesignFullLimit || 80);
+    if (target > 0 && target <= fullLimit) {
+      await this._runAgent('chapter_design_full', chapterDesignFullAgent, state);
+    } else {
+      await this.runDesignRanges(state);
+    }
     this.controller?.emit('phase_completed', { phase: 'design' });
+    return state;
+  }
+
+  async runDesignRanges(state) {
+    const target = Number(state.setup.target_chapters || 0);
+    if (!target) return state;
+    const batchSize = Math.max(1, Number(this.options.chapterDesignBatchSize || 25));
+    for (const [rangeStart, rangeEnd] of missingOrInvalidRanges(state, target)) {
+      for (let start = rangeStart; start <= rangeEnd; start += batchSize) {
+        const end = Math.min(rangeEnd, start + batchSize - 1);
+        await this._runAgent(`chapter_design_range[${start}-${end}]`, chapterDesignRangeAgent, state, [{ startChapter: start, endChapter: end }]);
+      }
+    }
+    state.assertChapterDesignsReady({ toChapter: target });
     return state;
   }
 
@@ -127,9 +172,11 @@ export class Orchestrator {
       toChapter || state.setup.target_chapters,
       this.options.chapterCountOverride || Infinity,
     );
-    const written = new Set(state.chapters.map((c) => c.order));
+    state.assertChapterDesignsReady({ fromChapter, toChapter: end });
+    const written = new Set(state.chapters.filter((c) => isChapterBodyValid(c, state.setup)).map((c) => c.order));
     for (let order = fromChapter; order <= end; order += 1) {
       if (written.has(order)) continue;
+      state.chapters = state.chapters.filter((c) => c.order !== order);
       if (this.controller) {
         await this.controller.checkpoint();
         this.controller.emit('chapter_started', { order });
@@ -167,13 +214,16 @@ export class Orchestrator {
     if (hasTitle && !state.cover_prompt) await this._runAgent('cover', coverAgent, state);
 
     const target = state.setup.target_chapters || 0;
-    if (state.chapter_designs.length < target) await this.runDesign(state);
+    const designIssues = state.chapterDesignIssues({ toChapter: target });
+    if (state.chapter_designs.length < target || designIssues.missing.length || designIssues.empty.length || designIssues.duplicates.length) {
+      await this.runDesign(state);
+    }
 
-    const written = state.chapters.length;
     const effectiveTarget = this.options.chapterCountOverride
       ? Math.min(target, this.options.chapterCountOverride)
       : target;
-    if (written < effectiveTarget) await this.runChapters(state, { fromChapter: written + 1 });
+    const nextChapter = state.firstUnwrittenOrInvalidChapter({ toChapter: effectiveTarget });
+    if (nextChapter != null) await this.runChapters(state, { fromChapter: nextChapter, toChapter: effectiveTarget });
 
     const needFinalize = !hasTitle
       || !state.cover_prompt

@@ -8,6 +8,7 @@ const ProgressScreen = ({ onShelf, onTab, projectId }) => {
   const [currentAgent, setCurrentAgent] = React.useState(null);
   const [currentPhase, setCurrentPhase] = React.useState(null);
   const [currentChapter, setCurrentChapter] = React.useState(null);
+  const [modelModalOpen, setModelModalOpen] = React.useState(false);
 
   useEventStream(React.useCallback((raw) => {
     const ev = { ...(raw?.data || {}), ...raw };
@@ -50,6 +51,8 @@ const ProgressScreen = ({ onShelf, onTab, projectId }) => {
   const isWriting = status === "writing";
   const isPaused = status === "paused";
   const canControl = state.can_control !== false;
+  const backendLabel = (BACKEND_OPTIONS.find(([id]) => id === (state.backend || setup.backend || "codex")) || BACKEND_OPTIONS[0])[1];
+  const modelLabel = state.model || setup.model || "默认分层";
   const activeChapter = isWriting && currentChapter != null ? currentChapter : null;
   const phaseLabel = {
     setup: "构建世界",
@@ -63,7 +66,7 @@ const ProgressScreen = ({ onShelf, onTab, projectId }) => {
   const recent = (() => {
     const slice = ds.slice(Math.max(0, chapters - 3), chapters + 4);
     return slice.map((d) => {
-      let st = d.status === "written" ? "done" : "queue";
+      let st = d.status === "written" ? "done" : d.status === "invalid" ? "invalid" : "queue";
       if (isWriting && activeChapter && d.order === activeChapter) st = "running";
       return { ...d, st };
     });
@@ -104,6 +107,9 @@ const ProgressScreen = ({ onShelf, onTab, projectId }) => {
             </span>
           )}
           <div className="right">
+            <button className="btn sm" onClick={() => setModelModalOpen(true)} disabled={!canControl} title="设置本书后续生成使用的模型">
+              <I.Sliders size={12} /> {backendLabel} · {modelLabel}
+            </button>
             <button className="btn sm" onClick={togglePause} disabled={!canControl}>
               {isPaused ? <><I.Play size={12} /> 继续</> : isWriting ? <><I.Pause size={12} /> 暂停</> : <><I.Play size={12} /> 启动</>}
             </button>
@@ -112,7 +118,15 @@ const ProgressScreen = ({ onShelf, onTab, projectId }) => {
 
         <div style={{ flex: 1, overflow: "auto", padding: 32 }}>
           <div style={{ maxWidth: 1000, margin: "0 auto", display: "flex", flexDirection: "column", gap: 18 }}>
-            <StageFlow state={state} sum={sum} designs={ds} currentAgent={currentAgent} currentPhase={currentPhase} status={status} />
+            <StageFlow
+              state={state}
+              sum={sum}
+              designs={ds}
+              currentAgent={currentAgent || state.current_agent}
+              currentPhase={currentPhase}
+              currentChapter={currentChapter ?? state.current_chapter}
+              status={status}
+            />
             <div className="card" style={{ padding: 28 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                 <div style={{ width: 60, height: 60, borderRadius: 14, background: "var(--brand-soft)", color: "var(--brand)", display: "grid", placeItems: "center", border: "1px solid var(--brand-dim)" }}>
@@ -179,17 +193,17 @@ const ProgressScreen = ({ onShelf, onTab, projectId }) => {
                       <div key={d.order} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 10px", background: st === "running" ? "var(--bg-2)" : "transparent", borderRadius: 6 }}>
                         <div style={{
                           width: 18, height: 18, borderRadius: "50%",
-                          background: st === "done" ? "var(--brand-soft)" : st === "running" ? "var(--warn-soft)" : "var(--bg-2)",
-                          color: st === "done" ? "var(--brand)" : st === "running" ? "var(--warn)" : "var(--text-3)",
+                          background: st === "done" ? "var(--brand-soft)" : st === "running" ? "var(--warn-soft)" : st === "invalid" ? "rgba(229,72,77,0.12)" : "var(--bg-2)",
+                          color: st === "done" ? "var(--brand)" : st === "running" ? "var(--warn)" : st === "invalid" ? "var(--danger, #e5484d)" : "var(--text-3)",
                           display: "grid", placeItems: "center", flex: "0 0 18px",
-                          border: `1px solid ${st === "done" ? "var(--brand-dim)" : st === "running" ? "var(--warn)" : "var(--border-0)"}`,
+                          border: `1px solid ${st === "done" ? "var(--brand-dim)" : st === "running" ? "var(--warn)" : st === "invalid" ? "var(--danger, #e5484d)" : "var(--border-0)"}`,
                         }}>
-                          {st === "done" ? <I.Check size={10} /> : st === "running" ? <span className="pulse" style={{ width: 6, height: 6, boxShadow: "none" }} /> : <I.Clock size={10} />}
+                          {st === "done" ? <I.Check size={10} /> : st === "running" ? <span className="pulse" style={{ width: 6, height: 6, boxShadow: "none" }} /> : st === "invalid" ? <I.X size={10} /> : <I.Clock size={10} />}
                         </div>
                         <span className="mono" style={{ fontSize: 11.5, color: "var(--text-3)", width: 52 }}>ch.{String(d.order).padStart(3, "0")}</span>
-                        <span style={{ flex: 1, fontSize: 13, color: st === "queue" ? "var(--text-3)" : "var(--text-0)" }}>{d.title || "—"}</span>
+                        <span style={{ flex: 1, fontSize: 13, color: st === "queue" ? "var(--text-3)" : st === "invalid" ? "var(--danger, #e5484d)" : "var(--text-0)" }}>{d.title || "—"}</span>
                         <span className="mono" style={{ fontSize: 11, color: "var(--text-2)", width: 100, textAlign: "right" }}>
-                          {st === "done" ? `${d.word_count.toLocaleString()} 字` : st === "running" ? "正在生成…" : "队列中"}
+                          {st === "done" ? `${d.word_count.toLocaleString()} 字` : st === "running" ? "正在生成…" : st === "invalid" ? "异常" : "队列中"}
                         </span>
                       </div>
                     );
@@ -219,6 +233,134 @@ const ProgressScreen = ({ onShelf, onTab, projectId }) => {
                 })}
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+      {modelModalOpen && (
+        <AiBackendModal
+          state={state}
+          projectId={projectId}
+          onClose={() => setModelModalOpen(false)}
+          onSaved={() => { setModelModalOpen(false); reloadState(); }}
+        />
+      )}
+    </div>
+  );
+};
+
+const MODEL_PLACEHOLDERS = {
+  codex: "例如 gpt-5.5；留空使用强/中/轻量默认分层",
+  claude: "例如 claude-sonnet-4-6；留空使用默认分层",
+  gemini: "例如 gemini-3-pro-preview；留空使用默认分层",
+  qwen: "例如 qwen3-coder-plus；留空使用默认分层",
+  opencode: "例如 openai/gpt-5；留空使用默认分层",
+};
+
+const AiBackendModal = ({ state, projectId, onClose, onSaved }) => {
+  const setup = state.setup || {};
+  const initialBackend = state.backend || setup.backend || "codex";
+  const initialModel = state.model || setup.model || "";
+  const [backend, setBackend] = React.useState(initialBackend);
+  const [model, setModel] = React.useState(initialModel);
+  const [aiStatus, setAiStatus] = React.useState(null);
+  const { busy, err, setErr, run } = useAsyncAction();
+
+  const refreshAiStatus = React.useCallback(() => {
+    let live = true;
+    setAiStatus(null);
+    api.aiStatus()
+      .then((s) => { if (live) setAiStatus(s); })
+      .catch(() => { if (live) setAiStatus({ available: false, by_id: {}, details: {} }); });
+    return () => { live = false; };
+  }, []);
+
+  React.useEffect(() => refreshAiStatus(), []);
+
+  React.useEffect(() => {
+    if (!aiStatus?.by_id || aiStatus.by_id[backend]) return;
+    const fallback = BACKEND_OPTIONS.find(([id]) => aiStatus.by_id[id]);
+    if (fallback) setBackend(fallback[0]);
+  }, [aiStatus, backend]);
+
+  const selected = BACKEND_OPTIONS.find(([id]) => id === backend) || BACKEND_OPTIONS[0];
+  const installed = Boolean(aiStatus?.by_id?.[backend]);
+  const changed = backend !== initialBackend || model.trim() !== initialModel;
+  const isRunning = Boolean(state.running || state.queued || state.paused);
+
+  const save = () => run(async () => {
+    if (!aiStatus || !aiStatus.available) {
+      setErr("未检测到可用的 AI 后端，请先安装并登录 CLI。");
+      return;
+    }
+    if (!installed) {
+      setErr(`所选后端「${selected[1]}」尚未安装或不可用。`);
+      return;
+    }
+    await api.updateAiBackend(projectId, { backend, model: model.trim() });
+    onSaved();
+  });
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-panel" style={{ width: 560, maxWidth: "calc(100vw - 32px)" }}>
+        <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid var(--border-0)" }}>
+          <div style={{ width: 28, height: 28, borderRadius: 7, background: "var(--brand-soft)", color: "var(--brand)", display: "grid", placeItems: "center" }}>
+            <I.Sliders size={14} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div className="display" style={{ fontSize: 15, fontWeight: 600 }}>后续模型</div>
+            <div style={{ fontSize: 11.5, color: "var(--text-3)" }}>只影响未生成章节；已写章节不会重写</div>
+          </div>
+          <button className="btn ghost icon" onClick={onClose} disabled={busy}><I.X size={14} /></button>
+        </div>
+
+        <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+          <div>
+            <div style={{ fontSize: 12, color: "var(--text-2)", marginBottom: 8 }}>AI 后端</div>
+            <BackendSelector
+              backend={backend}
+              setBackend={setBackend}
+              aiStatus={aiStatus}
+              busy={busy}
+              onRefresh={refreshAiStatus}
+            />
+          </div>
+
+          <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <span style={{ fontSize: 12, color: "var(--text-2)" }}>指定模型</span>
+              <button className="btn ghost sm" onClick={() => setModel("")} disabled={busy || !model}>使用默认分层</button>
+            </div>
+            <input
+              className="input"
+              value={model}
+              disabled={busy}
+              onChange={(e) => setModel(e.target.value)}
+              placeholder={MODEL_PLACEHOLDERS[backend] || "留空使用默认分层"}
+            />
+            <div style={{ marginTop: 8, fontSize: 11.5, color: "var(--text-3)", lineHeight: 1.6 }}>
+              留空时，系统会按任务类型自动选择强模型、普通模型和轻量模型；填写后，本书后续所有文本任务统一使用该模型。
+            </div>
+          </div>
+
+          {isRunning && (
+            <div style={{ padding: "10px 12px", borderRadius: 8, background: "var(--warn-soft)", color: "var(--warn)", fontSize: 12 }}>
+              当前任务已创建，保存后对下一次启动或排队尚未开始的任务生效。
+            </div>
+          )}
+
+          {err && <div style={{ color: "var(--rose)", fontSize: 12 }}>{err}</div>}
+        </div>
+
+        <div style={{ padding: 16, display: "flex", justifyContent: "space-between", gap: 10, borderTop: "1px solid var(--border-0)", background: "var(--bg-0)" }}>
+          <div className="mono" style={{ fontSize: 11, color: "var(--text-3)", alignSelf: "center" }}>
+            当前：{BACKEND_OPTIONS.find(([id]) => id === initialBackend)?.[1] || initialBackend} · {initialModel || "默认分层"}
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button className="btn" onClick={onClose} disabled={busy}>取消</button>
+            <button className="btn primary" onClick={save} disabled={busy || !changed || aiStatus === null}>
+              {busy ? "保存中…" : "保存"}
+            </button>
           </div>
         </div>
       </div>
@@ -322,19 +464,28 @@ const SETUP_STEPS = [
   ["book_title_agent",       "拟定书名",     (s) => s.has_title || (s.proposed_titles || []).length > 0],
 ];
 
-const StageFlow = ({ state, sum, designs, currentAgent, currentPhase, status }) => {
+const StageFlow = ({ state, sum, designs, currentAgent, currentPhase, currentChapter, status }) => {
   const isWriting = status === "writing";
   const isPaused = status === "paused";
   const setupDone   = SETUP_STEPS.every(([, , done]) => done(sum));
-  const designDone  = (sum.designs || 0) > 0;
-  const chaptersDone = (sum.chapters || 0) >= (sum.target_chapters || 1);
+  const target = sum.target_chapters || state.setup?.target_chapters || 0;
+  const designedCount = sum.designs || 0;
+  const hasFullDesignList = target > 0
+    ? designedCount >= target
+    : designs.length > 0 && designs.every((d) => d.status !== "pending");
+  const hasPendingDesigns = designs.some((d) => d.status === "pending");
+  const designDone  = hasFullDesignList && !hasPendingDesigns;
+  const chaptersDone = target > 0 && (sum.chapters || 0) >= target;
   const titlesProposed = sum.has_title || (sum.proposed_titles || []).length > 1;
+  const normalizedPhase = currentPhase === "write" ? "chapters" : currentPhase;
+  const chapterAgentActive = /^chapter_body(?:$|\[)/u.test(String(currentAgent || ""));
+  const chapterActive = isWriting && (normalizedPhase === "chapters" || currentChapter != null || chapterAgentActive);
 
   const macroPhases = [
-    { key: "setup",     label: "构建世界",   done: setupDone,    active: isWriting && currentPhase === "setup" },
-    { key: "design",    label: "分章设计",   done: designDone,   active: isWriting && currentPhase === "design" },
-    { key: "chapters",  label: "章节正文",   done: chaptersDone, active: isWriting && (currentPhase === "chapters" || (designDone && !chaptersDone)) },
-    { key: "finalize",  label: "收尾打磨",   done: titlesProposed && chaptersDone, active: isWriting && currentPhase === "finalize" },
+    { key: "setup",     label: "构建世界",   done: setupDone,    active: isWriting && normalizedPhase === "setup" },
+    { key: "design",    label: "分章设计",   done: designDone,   active: isWriting && normalizedPhase === "design" },
+    { key: "chapters",  label: "章节正文",   done: chaptersDone, active: chapterActive },
+    { key: "finalize",  label: "收尾打磨",   done: titlesProposed && chaptersDone, active: isWriting && normalizedPhase === "finalize" },
   ];
 
   // Determine which macro phase is "current" for layout emphasis

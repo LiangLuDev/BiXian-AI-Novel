@@ -4,7 +4,9 @@ import { runAsync } from '../runtime.mjs';
 function parseText(stdout) {
   try {
     const data = JSON.parse(stdout);
-    return data.result || data.content || stdout;
+    if (typeof data.result === 'string') return data.result;
+    if (typeof data.content === 'string') return data.content;
+    return stdout;
   } catch {
     return String(stdout || '').trim();
   }
@@ -28,20 +30,28 @@ function parseUsage(stdout) {
 export class ClaudeCliProvider extends LLMProvider {
   static id = 'claude';
 
-  constructor({ binary = 'claude', extra_args = [] } = {}) {
+  constructor({
+    binary = 'claude',
+    extra_args = [],
+    max_turns = 1,
+    max_turns_long = 10,
+  } = {}) {
     super();
     this.binary = binary;
     this.extra_args = extra_args;
+    this.max_turns = max_turns;
+    this.max_turns_long = max_turns_long;
   }
 
   get capabilities() { return { chat: true, image: false, schema: false, json: true }; }
 
-  async chat({ system, user, model, signal, timeout, agentName = 'agent' }) {
+  async chat({ system, user, model, signal, timeout, agentName = 'agent', longForm = false }) {
+    const maxTurns = longForm ? this.max_turns_long : this.max_turns;
     const cmd = [
       this.binary, '-p', '-',
       '--model', model,
       '--output-format', 'json',
-      '--max-turns', '1',
+      '--max-turns', String(maxTurns),
       '--allowedTools', '',
       '--system-prompt', system,
       ...this.extra_args,

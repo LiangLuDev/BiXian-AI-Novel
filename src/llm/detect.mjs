@@ -114,6 +114,8 @@ export function aiCapabilityError(backend = null) {
   const target = backend ? info.details[backend] : null;
   const targetLine = target
     ? `所选后端「${backendLabel(backend)}」不可用：${target.detail || target.status}`
+    : backend
+      ? `所选后端「${backendLabel(backend)}」不可用：未知 AI 后端`
     : '未检测到可用的 AI 能力。';
   return new LLMError(
     `${targetLine}\n请先安装并登录以下任一 CLI，或在设置中指定 CLI 绝对路径：\n`

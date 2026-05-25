@@ -9,7 +9,8 @@ const MODES = new Set(['all', 'resume', 'setup', 'design', 'write', 'finalize'])
 
 function buildLlm(state) {
   const backend = state?.setup?.backend || 'codex';
-  return new LLM(LLMConfig.forBackend(backend, {}));
+  const model = state?.setup?.model || null;
+  return new LLM(LLMConfig.forBackend(backend, { model }));
 }
 
 // 封面落点：状态字段优先，未填则回退到 <projectDir>/cover.png。

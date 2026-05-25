@@ -1,5 +1,9 @@
 export class LLMError extends Error {
-  constructor(message) { super(message); this.name = 'LLMError'; }
+  constructor(message, details = {}) {
+    super(message);
+    this.name = 'LLMError';
+    Object.assign(this, details);
+  }
 }
 
 export class LLMJSONError extends LLMError {

@@ -71,6 +71,8 @@ async function cmdInit(args, opts) {
       target_chapters: Number(opts.chapters || 20),
       target_word_count_wan: Number(opts.wan || 10),
       short_story: Boolean(opts['short-story']),
+      backend: opts.backend || opts.b || 'codex',
+      model: opts.model || opts.m || '',
     }),
   });
   saveState(dir, state);
@@ -91,6 +93,13 @@ function cmdInspect(args) {
   console.log(`secondary characters: ${st.secondary_characters.length}`);
   console.log(`relations: ${st.relations.length}`);
   console.log(`chapter designs: ${st.chapter_designs.length}`);
+  const designIssues = st.chapterDesignIssues({ toChapter: st.setup.target_chapters });
+  const issueCount = designIssues.missing.length + designIssues.empty.length + designIssues.duplicates.length;
+  if (issueCount) {
+    console.log(`chapter design coverage: ✗ missing=${designIssues.missing.length} empty=${designIssues.empty.length} duplicates=${designIssues.duplicates.length}`);
+  } else {
+    console.log('chapter design coverage: ✓');
+  }
   console.log(`chapters written: ${st.chapters.length}`);
   console.log(`total words: ${st.chapters.reduce((a, c) => a + (c.word_count || 0), 0)}`);
 }
@@ -116,6 +125,7 @@ async function cmdPipeline(cmd, args, opts) {
     : new NovelState({ setup: new ProjectSetup({ description: opts.description || opts.d || '' }) });
   const llm = makeLlm(opts, state);
   state.setup.backend = opts.backend || opts.b || state.setup.backend;
+  state.setup.model = opts.model || opts.m || state.setup.model || '';
   const orch = new Orchestrator(llm, new PipelineOptions({
     autosavePath: dir,
     chapterCountOverride: opts.cap ? Number(opts.cap) : null,

@@ -59,9 +59,31 @@ function scrapeLastMessage(stdout) {
     try {
       const ev = JSON.parse(line);
       if (ev.message || ev.content || ev.text) last = ev.message || ev.content || ev.text;
+      if (ev.type === 'response_item' && ev.item) {
+        if (ev.item.message || ev.item.content || ev.item.text) last = ev.item.message || ev.item.content || ev.item.text;
+        if (Array.isArray(ev.item.content)) {
+          const text = ev.item.content
+            .map((part) => part?.text || part?.content || '')
+            .filter(Boolean)
+            .join('');
+          if (text.trim()) last = text;
+        }
+      }
     } catch {}
   }
   return String(last).trim();
+}
+
+function readLastMessage(outPath, stdout = '') {
+  return fs.existsSync(outPath)
+    ? fs.readFileSync(outPath, 'utf8').trim()
+    : scrapeLastMessage(stdout);
+}
+
+function isRecoverableMaxTurns(error) {
+  const combined = `${error?.stderr || ''}\n${error?.stdout || ''}\n${error?.message || ''}`;
+  return /"terminal_reason"\s*:\s*"max_turns"/u.test(combined)
+    || /Reached maximum number of turns/iu.test(combined);
 }
 
 export class CodexProvider extends LLMProvider {
@@ -102,11 +124,16 @@ export class CodexProvider extends LLMProvider {
 
     const input = `# SYSTEM INSTRUCTIONS (highest priority — follow exactly)\n\n${system.trim()}\n\n---\n\n# USER REQUEST\n\n${user.trim()}${CHAT_OUTPUT_POLICY}`;
 
-    const res = await runAsync(cmd[0], cmd.slice(1), { input, timeout, agentName, signal });
-    const text = fs.existsSync(outPath)
-      ? fs.readFileSync(outPath, 'utf8').trim()
-      : scrapeLastMessage(res.stdout);
-    return { text, usage: parseUsage(res.stdout) };
+    try {
+      const res = await runAsync(cmd[0], cmd.slice(1), { input, timeout, agentName, signal });
+      return { text: readLastMessage(outPath, res.stdout), usage: parseUsage(res.stdout) };
+    } catch (error) {
+      const text = readLastMessage(outPath, error?.stdout || '');
+      if (text && isRecoverableMaxTurns(error)) {
+        return { text, usage: parseUsage(error?.stdout || '') };
+      }
+      throw error;
+    }
   }
 
   async generateImage({ prompt, outputPath, title = '', aspectRatio = '3:4', signal, timeout, agentName = 'cover_image', model }) {

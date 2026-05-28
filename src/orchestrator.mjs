@@ -261,7 +261,13 @@ export class Orchestrator {
       this.autosave(state);
     }
 
-    await this.runDesign(state);
+    // 续写必须走 range 模式：runDesign 入口在 target≤80 时会调 chapter_design_full，
+    // 那个 agent 会用 LLM 重写 state.chapter_designs 全集，把已有的 1-prev_target 章
+    // 设计覆盖掉。runDesignRanges 用 missingOrInvalidRanges 只补缺口，正是续写需要的。
+    this.controller?.emit('phase_started', { phase: 'design' });
+    await this.runDesignRanges(state);
+    this.controller?.emit('phase_completed', { phase: 'design' });
+
     await this.runChapters(state, { fromChapter: cont.from_chapter, toChapter: cont.to_chapter });
 
     this.controller?.emit('phase_completed', { phase: 'continuation' });

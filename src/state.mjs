@@ -62,6 +62,23 @@ export class CharacterRelation { constructor(data = {}) { Object.assign(this, { 
 export class Volume { constructor(data = {}) { Object.assign(this, { order: 0, title: '', summary: '', chapter_range: [0, 0] }, data); } toJSON() { return { ...this }; } }
 export class ChapterDesign { constructor(data = {}) { Object.assign(this, { order: 0, title: null, highlight: '', core_conflict: '', plot: '', emotional_tone: '', ending_hook: '', raw: '' }, data); } toJSON() { return { ...this }; } }
 export class Hook { constructor(data = {}) { Object.assign(this, { id: '', text: '', planted_chapter: 0, half_life: 10, due_chapter: null, resolved_chapter: null }, data); } toJSON() { return { ...this }; } }
+export class Continuation {
+  constructor(data = {}) {
+    Object.assign(this, {
+      order: 0,
+      from_chapter: 0,
+      to_chapter: 0,
+      prev_target: 0,
+      outline: '',
+      volumes: [],
+      arcs: '',
+      prev_summary: '',
+      created_at: '',
+    }, data);
+    this.volumes = (this.volumes || []).map((v) => new Volume(v));
+  }
+  toJSON() { return { ...this }; }
+}
 export class PublishMeta { constructor(data = {}) { Object.assign(this, { book_name: '', audience: '', main_category: '', themes: [], roles: [], plots: [], protagonists: [], synopsis: '', title_candidates: [], generated_at: null, locked: false }, data); } toJSON() { return { ...this }; } }
 
 export class Chapter {
@@ -126,6 +143,7 @@ export class NovelState {
       chapter_designs: [],
       chapters: [],
       hooks: [],
+      continuations: [],
       titles_proposed: [],
       cover_prompt: '',
       cover_image_path: '',
@@ -142,6 +160,26 @@ export class NovelState {
     this.chapter_designs = (this.chapter_designs || []).map((d) => new ChapterDesign(d));
     this.chapters = (this.chapters || []).map((c) => new Chapter(c));
     this.hooks = (this.hooks || []).map((h) => new Hook(h));
+    this.continuations = (this.continuations || []).map((c) => new Continuation(c));
+  }
+  contextForChapter(order) {
+    const cont = this.continuations.find((c) => order >= c.from_chapter && order <= c.to_chapter);
+    if (!cont) {
+      return {
+        outline: this.outline,
+        volumes: this.volumes,
+        arcs: this.arcs,
+        prev_summary: '',
+        continuation: null,
+      };
+    }
+    return {
+      outline: cont.outline || this.outline,
+      volumes: cont.volumes?.length ? cont.volumes : this.volumes,
+      arcs: cont.arcs || this.arcs,
+      prev_summary: cont.prev_summary || '',
+      continuation: cont,
+    };
   }
   allCharacters() { return [...this.main_characters, ...this.secondary_characters]; }
   characterCardsMd() { return this.allCharacters().map((c) => c.raw_card).filter(Boolean).join('\n\n'); }

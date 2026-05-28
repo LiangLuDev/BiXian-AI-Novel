@@ -108,7 +108,7 @@ export function looksLikeCliResultEnvelope(body) {
   }
 }
 
-export function chapterBodyIssue(chapter, setup = {}, { strictRange = false } = {}) {
+export function chapterBodyIssue(chapter, setup = {}, { strictRange = false, tolerance = 0 } = {}) {
   const body = String(chapter?.body || '');
   if (!body.trim()) return 'empty body';
   if (looksLikeCliResultEnvelope(body)) return 'CLI result envelope saved instead of chapter text';
@@ -117,8 +117,11 @@ export function chapterBodyIssue(chapter, setup = {}, { strictRange = false } = 
   if (!strictRange) return '';
   const min = Math.max(1, Number(setup?.per_chapter_min || 0));
   const max = Math.max(min, Number(setup?.per_chapter_max || min));
-  if (cjk < min) return `too short: ${cjk} CJK chars (minimum ${min})`;
-  if (cjk > max) return `too long: ${cjk} CJK chars (maximum ${max})`;
+  const tol = Math.max(0, Math.min(1, Number(tolerance || 0)));
+  const minEff = tol > 0 ? Math.max(1, Math.floor(min * (1 - tol))) : min;
+  const maxEff = tol > 0 ? Math.ceil(max * (1 + tol)) : max;
+  if (cjk < minEff) return `too short: ${cjk} CJK chars (minimum ${minEff})`;
+  if (cjk > maxEff) return `too long: ${cjk} CJK chars (maximum ${maxEff})`;
   return '';
 }
 

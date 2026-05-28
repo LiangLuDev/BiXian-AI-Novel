@@ -484,7 +484,8 @@ export async function chapterPostprocessAgent(state, llm, order) {
       new_characters: [],
       relations_delta: [],
     });
-    const issue = chapterBodyIssue(revisedChapter, state.setup, { strictRange: true });
+    // postprocess 是改写微调，字数容差放宽到 ±10%——避免因为多 1 字、少 10 字就 fail。
+    const issue = chapterBodyIssue(revisedChapter, state.setup, { strictRange: true, tolerance: 0.10 });
     if (issue) throw new Error(`chapter ${order} QA revision invalid: ${issue}`);
     const index = state.chapters.findIndex((c) => c.order === order);
     state.chapters[index] = revisedChapter;
@@ -565,18 +566,34 @@ export async function publishMetaAgent(description, llm, { audienceHint = '' } =
 // ---------- continuation agents ----------
 
 export function ensureContinuation(state, newTarget) {
+  const nt = Number(newTarget);
+  if (!Number.isFinite(nt) || nt <= 0) {
+    throw new Error(`invalid new target ${newTarget}`);
+  }
+
+  // 先尝试复用：如果已经有 continuation 以 nt 收尾，说明上一轮已经规划过这个目标，
+  // 这次只是要把缺章节补完，不要重新做大纲/分卷/弧线。
+  const covered = state.continuations.find((c) => c.to_chapter === nt);
+  if (covered) {
+    return { cont: covered, prevTarget: covered.prev_target, isNew: false };
+  }
+
+  // 没有覆盖的 continuation —— 这是"再往前续"模式：
+  // prev_target 取已写章节最大值、已存在的所有 continuation.to_chapter、
+  // 以及 setup.target_chapters 三者最大值。
   const writtenMax = state.chapters
     .filter((c) => c.body && c.body.trim())
     .reduce((m, c) => Math.max(m, c.order), 0);
-  const prevTarget = Math.max(Number(state.setup.target_chapters || 0), writtenMax, 0);
-  const nt = Number(newTarget);
-  if (!Number.isFinite(nt) || nt <= prevTarget) {
-    throw new Error(`new target ${newTarget} must exceed current ${prevTarget}`);
-  }
-  const existing = state.continuations.find(
-    (c) => c.from_chapter === prevTarget + 1 && c.to_chapter === nt,
+  const contMaxEnd = state.continuations.reduce((m, c) => Math.max(m, c.to_chapter || 0), 0);
+  const prevTarget = Math.max(
+    Number(state.setup.target_chapters || 0),
+    writtenMax,
+    contMaxEnd,
+    0,
   );
-  if (existing) return { cont: existing, prevTarget, isNew: false };
+  if (nt <= prevTarget) {
+    throw new Error(`new target ${nt} must exceed current ${prevTarget}`);
+  }
   const cont = new Continuation({
     order: state.continuations.length + 1,
     from_chapter: prevTarget + 1,

@@ -594,9 +594,14 @@ export function runServer(projectDir, { host = '127.0.0.1', port = 8000 } = {}) 
         let state;
         try { state = requireState(workspace, pid); }
         catch (e) { return send(res, 404, { detail: e.message }); }
-        const current = Number(state.setup.target_chapters || 0);
-        if (newTarget <= current) {
-          return send(res, 400, { detail: `target_chapters must exceed current ${current}` });
+        // 校验：newTarget 不能低于已写章节最大值（否则没意义）。
+        // 至于是否大于 setup.target_chapters / 已有 continuation —— 交给 ensureContinuation 判断
+        // （它会先尝试复用 to_chapter 完全匹配的 continuation，避免重复跑 4 个续集 agent）。
+        const writtenMax = state.chapters
+          .filter((c) => c?.body && String(c.body).trim())
+          .reduce((m, c) => Math.max(m, c.order || 0), 0);
+        if (newTarget < writtenMax) {
+          return send(res, 400, { detail: `target_chapters cannot be less than already-written ${writtenMax}` });
         }
         const taskState = registry.stateOf(pid);
         if (taskState.running || taskState.queued) {

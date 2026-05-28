@@ -4,6 +4,7 @@ import { NovelProject } from './project.mjs';
 import { isChapterBodyValid } from './state.mjs';
 import {
   bookTitleAgent, chapterBodyAgent, chapterDesignFullAgent, chapterDesignRangeAgent, chapterPostprocessAgent, coverAgent, coverImageAgent,
+  continuationArcsAgent, continuationOutlineAgent, continuationVolumeAgent, ensureContinuation, priorSummaryAgent,
   mainArcsAgent, mainCharsAgent, outlineAgent, relationsAgent,
   secondaryArcsAgent, secondaryCharsAgent, styleGuideAgent, themeAgent, volumeAgent, worldAgent,
 } from './agents.mjs';
@@ -230,6 +231,40 @@ export class Orchestrator {
       || !state.cover_prompt
       || (this.options.generateCoverImage && !state.cover_image_path);
     if (needFinalize) await this.runFinalize(state);
+    return state;
+  }
+
+  async runContinuation(state, { newTarget } = {}) {
+    this.controller?.emit('phase_started', { phase: 'continuation' });
+
+    const { cont, isNew } = ensureContinuation(state, Number(newTarget));
+    if (isNew) {
+      this.autosave(state);
+      this.controller?.emit('state_updated', {});
+    }
+
+    if (!cont.prev_summary?.trim()) {
+      await this._runAgent('prior_summary', priorSummaryAgent, state, [{ continuation: cont }]);
+    }
+    if (!cont.outline?.trim()) {
+      await this._runAgent('continuation_outline', continuationOutlineAgent, state, [{ continuation: cont }]);
+    }
+    if (!cont.volumes?.length) {
+      await this._runAgent('continuation_volume', continuationVolumeAgent, state, [{ continuation: cont }]);
+    }
+    if (!cont.arcs?.trim()) {
+      await this._runAgent('continuation_arcs', continuationArcsAgent, state, [{ continuation: cont }]);
+    }
+
+    if (Number(state.setup.target_chapters || 0) < cont.to_chapter) {
+      state.setup.target_chapters = cont.to_chapter;
+      this.autosave(state);
+    }
+
+    await this.runDesign(state);
+    await this.runChapters(state, { fromChapter: cont.from_chapter, toChapter: cont.to_chapter });
+
+    this.controller?.emit('phase_completed', { phase: 'continuation' });
     return state;
   }
 

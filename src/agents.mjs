@@ -1,6 +1,6 @@
 import { loadPromptWithBlocks } from './prompts.mjs';
 import { setupVars, renderPair } from './agents-common.mjs';
-import { Character, CharacterRelation, Chapter, ChapterDesign, PublishMeta, StyleGuide, Volume, chapterBodyCjkCount, chapterBodyIssue } from './state.mjs';
+import { Character, CharacterRelation, Chapter, ChapterDesign, Continuation, PublishMeta, StyleGuide, Volume, chapterBodyCjkCount, chapterBodyIssue, nowIso } from './state.mjs';
 import { DEFAULT_ANTI_AI_TELLS } from './blocks.mjs';
 import { LIMITS as FANQIE_LIMITS, MAIN_CATEGORIES, PLOTS, ROLES, THEMES, fanqieValidIds } from './services/fanqie_tags.mjs';
 
@@ -559,4 +559,131 @@ export async function publishMetaAgent(description, llm, { audienceHint = '' } =
     generated_at: new Date().toISOString(),
     locked: false,
   });
+}
+
+// ---------- continuation agents ----------
+
+export function ensureContinuation(state, newTarget) {
+  const writtenMax = state.chapters
+    .filter((c) => c.body && c.body.trim())
+    .reduce((m, c) => Math.max(m, c.order), 0);
+  const prevTarget = Math.max(Number(state.setup.target_chapters || 0), writtenMax, 0);
+  const nt = Number(newTarget);
+  if (!Number.isFinite(nt) || nt <= prevTarget) {
+    throw new Error(`new target ${newTarget} must exceed current ${prevTarget}`);
+  }
+  const existing = state.continuations.find(
+    (c) => c.from_chapter === prevTarget + 1 && c.to_chapter === nt,
+  );
+  if (existing) return { cont: existing, prevTarget, isNew: false };
+  const cont = new Continuation({
+    order: state.continuations.length + 1,
+    from_chapter: prevTarget + 1,
+    to_chapter: nt,
+    prev_target: prevTarget,
+    created_at: nowIso(),
+  });
+  state.continuations.push(cont);
+  return { cont, prevTarget, isNew: true };
+}
+
+function writtenSummariesText(state, throughChapter) {
+  const lines = [];
+  for (const ch of state.chapters
+    .filter((c) => c.order <= throughChapter)
+    .sort((a, b) => a.order - b.order)) {
+    const title = ch.design?.title || '';
+    const summary = (ch.summary || '').trim()
+      || (ch.design?.raw || '').slice(0, 400).trim()
+      || (ch.body || '').slice(0, 400).trim();
+    lines.push(`## 第${ch.order}章 ${title}\n${summary}`);
+  }
+  return lines.join('\n\n');
+}
+
+export async function priorSummaryAgent(state, llm, { continuation } = {}) {
+  if (!continuation) throw new Error('priorSummaryAgent requires continuation');
+  if (continuation.prev_summary && continuation.prev_summary.trim()) return state;
+  const lastOrder = continuation.prev_target;
+  const lastChapter = state.chapters.find((c) => c.order === lastOrder);
+  const vars = setupVars(state, {
+    written_summaries: writtenSummariesText(state, lastOrder) || '（无可用章节摘要）',
+    last_chapter_tail: (lastChapter?.body || '').slice(-600) || '（无）',
+  });
+  const [sys, usr] = renderPair(
+    P('continuation/prior_summary/system'),
+    P('continuation/prior_summary/user'),
+    vars,
+  );
+  const text = await llm.chat(sys, usr, { agentName: 'prior_summary', longForm: true });
+  continuation.prev_summary = String(text || '').trim();
+  if (!continuation.prev_summary) throw new Error('priorSummaryAgent returned empty summary');
+  return state;
+}
+
+export async function continuationOutlineAgent(state, llm, { continuation } = {}) {
+  if (!continuation) throw new Error('continuationOutlineAgent requires continuation');
+  if (continuation.outline && continuation.outline.trim()) return state;
+  const vars = setupVars(state, {
+    prev_summary: continuation.prev_summary,
+    continuation_from: continuation.from_chapter,
+    continuation_to: continuation.to_chapter,
+    continuation_count: continuation.to_chapter - continuation.from_chapter + 1,
+    target_chapters: continuation.to_chapter,
+  });
+  const [sys, usr] = renderPair(
+    P('continuation/outline/system'),
+    P('continuation/outline/user'),
+    vars,
+  );
+  continuation.outline = await llm.chat(sys, usr, { agentName: 'continuation_outline', longForm: true });
+  if (!continuation.outline.trim()) throw new Error('continuationOutlineAgent returned empty outline');
+  return state;
+}
+
+export async function continuationVolumeAgent(state, llm, { continuation } = {}) {
+  if (!continuation) throw new Error('continuationVolumeAgent requires continuation');
+  if (continuation.volumes?.length) return state;
+  const vars = setupVars(state, {
+    continuation_outline: continuation.outline,
+    continuation_from: continuation.from_chapter,
+    continuation_to: continuation.to_chapter,
+  });
+  const [sys, usr] = renderPair(
+    P('continuation/volume/system'),
+    P('continuation/volume/user'),
+    vars,
+  );
+  const data = await llm.chatJson(sys, usr, { agentName: 'continuation_volume' });
+  continuation.volumes = (data.volumes || []).map((v, i) => new Volume({
+    order: v.order || i + 1,
+    title: v.title || `续集卷 ${i + 1}`,
+    summary: v.summary || '',
+    chapter_range: v.chapter_range || [continuation.from_chapter, continuation.to_chapter],
+  }));
+  if (!continuation.volumes.length) throw new Error('continuationVolumeAgent returned no volumes');
+  return state;
+}
+
+export async function continuationArcsAgent(state, llm, { continuation } = {}) {
+  if (!continuation) throw new Error('continuationArcsAgent requires continuation');
+  if (continuation.arcs && continuation.arcs.trim()) return state;
+  const volumesText = (continuation.volumes || [])
+    .map((v) => `- 卷${v.order} ${v.title}（${v.chapter_range[0]}-${v.chapter_range[1]}）：${v.summary}`)
+    .join('\n');
+  const vars = setupVars(state, {
+    prev_summary: continuation.prev_summary,
+    continuation_outline: continuation.outline,
+    continuation_volumes_text: volumesText || '（无）',
+    continuation_from: continuation.from_chapter,
+    continuation_to: continuation.to_chapter,
+  });
+  const [sys, usr] = renderPair(
+    P('continuation/arcs/system'),
+    P('continuation/arcs/user'),
+    vars,
+  );
+  continuation.arcs = await llm.chat(sys, usr, { agentName: 'continuation_arcs', longForm: true });
+  if (!continuation.arcs.trim()) throw new Error('continuationArcsAgent returned empty arcs');
+  return state;
 }

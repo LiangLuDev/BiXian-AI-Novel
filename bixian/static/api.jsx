@@ -42,6 +42,8 @@ const api = {
     if (projectId && !payload.project_id) payload.project_id = projectId;
     return api.postJSON("/api/run", payload);
   },
+  continueWriting: (projectId, targetChapters) =>
+    api.postJSON("/api/continue", { project_id: projectId, target_chapters: Number(targetChapters) }),
   pause: (projectId) => api.postJSON(`/api/pause${api.projectQuery(projectId)}`),
   resume: (projectId) => api.postJSON(`/api/resume${api.projectQuery(projectId)}`),
   // 注：stop 已移除。要停一本书 = 删除（自动停 + 清盘 + 让排队的本顶上）。

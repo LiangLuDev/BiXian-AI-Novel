@@ -9,6 +9,10 @@ const ProgressScreen = ({ onShelf, onTab, projectId }) => {
   const [currentPhase, setCurrentPhase] = React.useState(null);
   const [currentChapter, setCurrentChapter] = React.useState(null);
   const [modelModalOpen, setModelModalOpen] = React.useState(false);
+  const [continueModalOpen, setContinueModalOpen] = React.useState(false);
+  const [continueTarget, setContinueTarget] = React.useState("");
+  const [continueBusy, setContinueBusy] = React.useState(false);
+  const [continueErr, setContinueErr] = React.useState("");
 
   useEventStream(React.useCallback((raw) => {
     const ev = { ...(raw?.data || {}), ...raw };
@@ -72,6 +76,27 @@ const ProgressScreen = ({ onShelf, onTab, projectId }) => {
     });
   })();
 
+  const openContinue = () => {
+    setContinueTarget(String(Math.max(target + 1, target * 2)));
+    setContinueErr("");
+    setContinueModalOpen(true);
+  };
+
+  const submitContinue = async () => {
+    setContinueBusy(true); setContinueErr("");
+    try {
+      const n = Number(continueTarget);
+      if (!n || !Number.isFinite(n) || n <= target) throw new Error(`新章数必须大于当前 ${target} 章`);
+      await api.continueWriting(projectId, n);
+      setContinueModalOpen(false);
+      reloadState();
+    } catch (e) {
+      setContinueErr(e.message || String(e));
+    } finally {
+      setContinueBusy(false);
+    }
+  };
+
   const togglePause = async () => {
     if (!canControl) return;
     try {
@@ -110,6 +135,11 @@ const ProgressScreen = ({ onShelf, onTab, projectId }) => {
             <button className="btn sm" onClick={() => setModelModalOpen(true)} disabled={!canControl} title="设置本书后续生成使用的模型">
               <I.Sliders size={12} /> {backendLabel} · {modelLabel}
             </button>
+            {chapters >= target && target > 0 && !isWriting && !isPaused && (
+              <button className="btn sm" onClick={openContinue} disabled={!canControl} title="续写更多章节">
+                <I.Plus size={12} /> 续写
+              </button>
+            )}
             <button className="btn sm" onClick={togglePause} disabled={!canControl}>
               {isPaused ? <><I.Play size={12} /> 继续</> : isWriting ? <><I.Pause size={12} /> 暂停</> : <><I.Play size={12} /> 启动</>}
             </button>
@@ -243,6 +273,36 @@ const ProgressScreen = ({ onShelf, onTab, projectId }) => {
           onClose={() => setModelModalOpen(false)}
           onSaved={() => { setModelModalOpen(false); reloadState(); }}
         />
+      )}
+      {continueModalOpen && (
+        <div className="modal-overlay" onClick={() => !continueBusy && setContinueModalOpen(false)}>
+          <div className="modal-panel" style={{ width: 460, maxWidth: "calc(100vw - 32px)" }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--border-0)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ fontSize: 16, fontWeight: 600 }}>续写本书</div>
+              <button className="iconbtn" onClick={() => !continueBusy && setContinueModalOpen(false)}><I.X size={14} /></button>
+            </div>
+            <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 14 }}>
+              <div style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.6 }}>
+                当前 <span className="mono" style={{ color: "var(--text-0)" }}>{target}</span> 章已完成。把目标章数改大，AI 会生成"续集卷"大纲、分卷、弧线，并按续集上下文继续写章节。
+              </div>
+              <label style={{ fontSize: 12, color: "var(--text-3)" }}>新目标章数</label>
+              <input
+                type="number"
+                className="input"
+                value={continueTarget}
+                onChange={(e) => setContinueTarget(e.target.value)}
+                min={target + 1}
+                autoFocus
+                style={{ padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-0)", background: "var(--bg-2)", color: "var(--text-0)" }}
+              />
+              {continueErr && <div style={{ color: "var(--danger, #e5484d)", fontSize: 12 }}>{continueErr}</div>}
+            </div>
+            <div style={{ padding: "12px 24px 20px", display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button className="btn sm" onClick={() => setContinueModalOpen(false)} disabled={continueBusy}>取消</button>
+              <button className="btn sm primary" onClick={submitContinue} disabled={continueBusy}>{continueBusy ? "提交中…" : "开始续写"}</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

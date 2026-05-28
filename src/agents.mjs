@@ -105,14 +105,21 @@ function knownCharactersText(state) {
   return names.length ? names.join('、') : '（暂无已知角色）';
 }
 
-function openHooksText(state, order = null) {
-  const hooks = state.openHooks(order);
+function openHooksText(state, order = null, { minPlantedChapter = 0 } = {}) {
+  let hooks = state.openHooks(order);
+  if (minPlantedChapter > 0) {
+    hooks = hooks.filter((h) => Number(h.planted_chapter || 0) >= minPlantedChapter);
+  }
   if (!hooks.length) return '（暂无开放伏笔）';
   return hooks.map((h) => `- ${h.id}: ${h.text}（第${h.planted_chapter}章埋下，half_life=${h.half_life}）`).join('\n');
 }
 
 function chapterQaVars(state, chapter) {
   const order = Number(chapter.order || 0);
+  // 续集章节的 QA 不应该被原书未关闭的伏笔牵连——那些伏笔属于原书的责任。
+  // 续集卷只对自己 from_chapter 开始埋的伏笔负责。
+  const ctx = typeof state.contextForChapter === 'function' ? state.contextForChapter(order) : null;
+  const minPlantedChapter = ctx?.continuation ? ctx.continuation.from_chapter : 0;
   return setupVars(state, {
     chapter_order: order,
     chapter_title: chapter.design?.title || '',
@@ -120,10 +127,10 @@ function chapterQaVars(state, chapter) {
     current_chapter: chapter.body || '',
     chapter_excerpt: chapter.body || '',
     known_characters: knownCharactersText(state),
-    open_hooks_text: openHooksText(state, order),
+    open_hooks_text: openHooksText(state, order, { minPlantedChapter }),
     prev_chapter_block: state.prevChapterEnding(order),
     recent_summaries_block: state.recentChapterSummaries(),
-    arcs: state.arcs || '',
+    arcs: ctx?.arcs || state.arcs || '',
   });
 }
 

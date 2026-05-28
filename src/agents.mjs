@@ -350,6 +350,7 @@ export async function chapterDesignRangeAgent(state, llm, { startChapter, endCha
   const start = Math.max(1, Number(startChapter || 1));
   const end = Math.max(start, Number(endChapter || start));
   const vars = setupVars(state, {
+    chapter_order: start,
     start_chapter: start,
     end_chapter: end,
     batch_count: end - start + 1,

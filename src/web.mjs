@@ -585,6 +585,29 @@ export function runServer(projectDir, { host = '127.0.0.1', port = 8000 } = {}) 
         return send(res, 200, { ok: true, ...st });
       }
 
+      if (method === 'POST' && pathname === '/api/continue') {
+        const body = await readBody(req);
+        const pid = body.project_id || activeId;
+        if (!pid) return send(res, 400, { detail: 'no project_id' });
+        const newTarget = Number(body.target_chapters || 0);
+        if (!newTarget || newTarget <= 0) return send(res, 400, { detail: 'target_chapters required' });
+        let state;
+        try { state = requireState(workspace, pid); }
+        catch (e) { return send(res, 404, { detail: e.message }); }
+        const current = Number(state.setup.target_chapters || 0);
+        if (newTarget <= current) {
+          return send(res, 400, { detail: `target_chapters must exceed current ${current}` });
+        }
+        const taskState = registry.stateOf(pid);
+        if (taskState.running || taskState.queued) {
+          return send(res, 400, { detail: 'project is busy; stop or wait before continuing' });
+        }
+        const capErr = aiCapabilityError(state.setup.backend || null);
+        if (capErr) return send(res, 412, { detail: capErr.message, code: 'ai_unavailable', backend: state.setup.backend || '' });
+        const st = registry.enqueue(pid, { mode: 'continue', newTarget });
+        return send(res, 200, { ok: true, ...st });
+      }
+
       if (method === 'POST' && (pathname === '/api/pause' || pathname === '/api/resume')) {
         const body = await readBody(req).catch(() => ({}));
         const pid = pidFrom(url, body);

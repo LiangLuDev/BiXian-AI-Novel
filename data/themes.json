@@ -7,12 +7,12 @@
   "themes": [
     {
       "id": "history-001",
-      "title": "古代水利背锅人",
+      "title": "洪水冲垮三县后，他们逼我背锅",
       "description": "主角是一个专门验收堤坝、河道和水闸的底层水利小吏，开局洪水冲垮三县，朝廷急需一个替罪羊，所有上官逼他在验收文书上签字认罪；他为了活命，从泥沙沉积、木桩腐烂、河道私改和赈灾账册里查出官员、豪族、商帮合谋吞工程款的“吃堤链”，后续主线是他一边被追杀一边修堤救民，用水文知识和账本证据把一批高官拖下水。",
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -28,7 +28,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -44,7 +44,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -60,7 +60,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -76,7 +76,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -92,7 +92,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -103,12 +103,12 @@
     },
     {
       "id": "history-007",
-      "title": "禁书抄写人",
+      "title": "我替人抄禁书，抄出十年前灭门案",
       "description": "主角是替地下书坊抄写冷门古籍的穷书生，开局接到一单高价抄书活，几本被禁的农书、医书、兵书里都出现同一个神秘批注者的字迹；他越抄越发现这些批注指向十年前一场被抹掉的大案，而买书、卖书、查书的人都在互相灭口，主线是他凭记忆、笔迹、版本差异和书页暗码，在追杀中拼出真相。",
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -124,7 +124,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -140,7 +140,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -156,7 +156,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -172,7 +172,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -188,7 +188,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -204,7 +204,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -220,7 +220,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -236,7 +236,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -252,7 +252,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -268,7 +268,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -284,7 +284,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -300,7 +300,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -316,7 +316,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -332,7 +332,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -348,7 +348,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -364,7 +364,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -380,7 +380,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -396,7 +396,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -412,7 +412,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -428,7 +428,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -444,7 +444,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -460,7 +460,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -476,7 +476,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -492,7 +492,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -502,12 +502,12 @@
     },
     {
       "id": "male-v1-002",
-      "title": "物理常数偏移的技术流穿越",
+      "title": "穿越后，我用物理知识带着世界起飞",
       "description": "硬核技术流异世界长篇，主角陈砚是国内顶尖凝聚态物理博士后，穿越到一个停滞在 18 世纪前工业水平的异世界，他不开金手指、不背元素周期表装逼，而是花了整整做一件事：通过观察日常现象（铁为什么不生锈、火药为什么威力偏弱、磁石指向异常）反推出这个世界的**电磁常数与地球存在 0.7% 的偏移**，因此整条科技树的最优路径与地球完全不同——蒸汽机在这里是死路，但磁流体直接可行；故事的爽点是真·物理推演，每一次技术突破都有清晰的\"现象→假设→实验→验证→产业化\"链条，主角从一个被当作异端的流浪学者，一步步建立学派、工厂、再到撬动整个大陆的工业革命；中后期揭示这个常数偏移是某种文明级实验的产物，主角面对的真正敌人是\"设定规则的人\"；风格参考《临高启明》的工业细节 + 《三体》的硬度 + 《文明》游戏的推进感，主打 25-40 岁理工科男读者，规避所有种田文俗套（不写鸡兔同笼、不写炒菜征服世界）。",
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -517,12 +517,12 @@
     },
     {
       "id": "male-v1-003",
-      "title": "七子江湖群像",
+      "title": "朝廷刚让武人登记，三千门派就反了",
       "description": "反爽文江湖群像长篇，背景是一个正在崩溃的旧江湖——朝廷新政推行武人登记、镖局被官营物流取代、门派靠卖丹方上市，七个少年人在这个时代各自挣扎：一个是失去武功的前少年天才靠脑子重新爬起来，一个是江湖名门的私生女想以女子身考武进士，一个是说书人之子用一支笔煽动江湖舆论，一个是镖局二代被迫和官营合作，一个是邪派遗孤要为家族翻案，一个是西域来的商人之子做军火生意，一个是看似最无害的小道士其实是天命所归但他自己拒绝认命；七条线时分时合，没有传统主角，每个人都有自己的\"道\"和必须付出的代价；节奏上七线并行慢慢交织，汇成一场决定旧江湖存亡的大局；主题是\"时代变了，江湖人怎么活\"，结局没有横扫天下，每个人都得到自己想要又不完全是自己想要的东西；风格参考《雪中悍刀行》的气质 + 《琅琊榜》的人物纠葛 + 《冰与火之歌》的群像调度，目标读者是 28-40 岁审美升级的成熟男频读者。",
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -537,7 +537,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -547,7 +547,7 @@
     },
     {
       "id": "female-v1-005",
-      "title": "大女主无 CP · 量化女王",
+      "title": "被公司踢出后，我带姐妹们赚回一切",
       "description": "现代金融大女主长篇，全程零恋爱、零雌竞、零男人拯救，主角苏沉是国内 Top3 量化私募的女合伙人，CMU 统计博士、12 岁开始用零花钱跑配对交易；故事从她 32 岁那年一个交易日内被合伙人联手做局踢出公司、所有的代码和模型被锁死开始——她带着一台 MacBook、一个被冻结的境外账户、一个学生时代留下的旧策略，从零开始重建一切；每 5 章一次完整的策略闭环（统计套利、波动率交易、宏观对冲、危机阿尔法），每一笔交易都有真实可推演的逻辑、真实的回撤、真实的对手盘心理；中段她创办女性量化基金，招的全是被传统金融业边缘化的女博士；爽点是**专业能力本身的极致展现**——她到底有多牛、对手有多措手不及；高潮是 2028 年一场针对中国对冲基金的国际做空狙击，她带着团队反向猎杀；结局她没和任何人在一起，她在新加坡开了自己的研究所；主题是\"一个女人不需要被定义为某个人的什么\"；风格参考《华尔街之狼》的密度 + 《沉默的真相》的克制 + 《漫长的季节》的人物厚度，目标读者是 25-40 岁高知女性，能直接切短剧、出海。",
       "audience": "female",
       "genre": "通用",
@@ -632,7 +632,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -647,7 +647,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -662,7 +662,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -677,7 +677,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -692,7 +692,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -707,7 +707,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -722,7 +722,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -737,7 +737,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -752,7 +752,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -767,7 +767,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -782,7 +782,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -797,7 +797,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -812,7 +812,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -827,7 +827,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -842,7 +842,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -857,7 +857,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -872,7 +872,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -887,7 +887,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -902,7 +902,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -917,7 +917,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -932,7 +932,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -947,7 +947,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -957,12 +957,12 @@
     },
     {
       "id": "male-v2-032",
-      "title": "反诈警察 · 缅北博弈",
+      "title": "受害人又回缅北后，我查出整条诈骗链",
       "description": "现代刑侦 + 跨境博弈长篇，主角是 33 岁的浙江反诈中心民警，从一个本地受害人案件追到缅北电诈园区，故事**完全不写主角亲自跨境硬刚**，写的是**情报、跨境警务合作、家属心理、舆论、电诈受害者反复回到园区的复杂人性**；每 6 章一个完整案件链；中段他要面对一个非常关键的问题：受害人到底是被骗的，还是部分自愿；主题是\"诈骗是欲望的镜子\"；结局他参与的跨境行动救出 200 人；风格参考《孤注一掷》+《湄公河行动》+《沉默的真相》。",
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -977,7 +977,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -992,7 +992,7 @@
       "audience": "male",
       "genre": "通用",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "创新题材"
@@ -1130,7 +1130,7 @@
     },
     {
       "id": "female-v2-043",
-      "title": "古代女医 · 太医院的第一人",
+      "title": "女子不得入太医院？我偏要做第一人",
       "description": "古代职业大女主长篇，架空背景设定在一个允许女子学医但仍禁女子入太医院的中原王朝，主角是江南世医之女谢清宁，故事是**她怎么一步步从民间游方女医、到地方医官、到京城太医院的第一位女院判**；每 8 章一组医案（瘟疫、宫廷中毒、产后大出血、儿科疑难、男性官员的隐疾），每个医案都有真实可考据的中医脉络；情感线克制（一位曾受她救治的将军，全程并肩，结局开放）；主题是\"她不是因为是女人才被记住，是因为她是好医生\"；风格参考《女医明妃传》但去掉所有玛丽苏 + 《大明王朝》制度推演。",
       "audience": "female",
       "genre": "通用",
@@ -1407,7 +1407,7 @@
       "audience": "male",
       "genre": "都市修仙",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "都市修仙",
@@ -1424,7 +1424,7 @@
       "audience": "male",
       "genre": "游戏入侵",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "诸天/无限",
       "tags": [
         "游戏入侵",
@@ -1441,7 +1441,7 @@
       "audience": "male",
       "genre": "仙侠",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "仙侠小说",
       "tags": [
         "仙侠",
@@ -1458,7 +1458,7 @@
       "audience": "male",
       "genre": "都市玄幻",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "都市玄幻",
@@ -1475,7 +1475,7 @@
       "audience": "male",
       "genre": "悬疑",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "悬疑小说",
       "tags": [
         "规则怪谈",
@@ -1492,7 +1492,7 @@
       "audience": "male",
       "genre": "末世高武",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "玄幻小说",
       "tags": [
         "高武",
@@ -1509,7 +1509,7 @@
       "audience": "male",
       "genre": "都市奇幻",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "都市奇幻",
@@ -1526,7 +1526,7 @@
       "audience": "male",
       "genre": "末世",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "科幻小说",
       "tags": [
         "末世",
@@ -1543,7 +1543,7 @@
       "audience": "male",
       "genre": "仙侠",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "仙侠小说",
       "tags": [
         "仙侠",
@@ -1560,7 +1560,7 @@
       "audience": "male",
       "genre": "都市怪谈",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "悬疑小说",
       "tags": [
         "都市怪谈",
@@ -1577,7 +1577,7 @@
       "audience": "male",
       "genre": "科幻末世",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "科幻小说",
       "tags": [
         "废土",
@@ -1594,7 +1594,7 @@
       "audience": "male",
       "genre": "诸天无限",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "诸天/无限",
       "tags": [
         "诸天无限",
@@ -1611,7 +1611,7 @@
       "audience": "male",
       "genre": "武侠",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "武侠小说",
       "tags": [
         "武侠",
@@ -1628,7 +1628,7 @@
       "audience": "male",
       "genre": "近未来",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "科幻小说",
       "tags": [
         "近未来",
@@ -1645,7 +1645,7 @@
       "audience": "male",
       "genre": "都市玄幻",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "都市玄幻",
@@ -1662,7 +1662,7 @@
       "audience": "male",
       "genre": "仙侠",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "仙侠小说",
       "tags": [
         "仙侠",
@@ -1679,7 +1679,7 @@
       "audience": "male",
       "genre": "民俗悬疑",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "悬疑小说",
       "tags": [
         "民俗悬疑",
@@ -1696,7 +1696,7 @@
       "audience": "male",
       "genre": "都市玄幻",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "都市玄幻",
@@ -1713,7 +1713,7 @@
       "audience": "male",
       "genre": "科幻",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "科幻小说",
       "tags": [
         "科幻",
@@ -1730,7 +1730,7 @@
       "audience": "male",
       "genre": "都市修仙",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "都市修仙",
@@ -1747,7 +1747,7 @@
       "audience": "male",
       "genre": "历史",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史",
@@ -1764,7 +1764,7 @@
       "audience": "male",
       "genre": "都市异能",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "都市异能",
@@ -1781,7 +1781,7 @@
       "audience": "male",
       "genre": "科幻灾难",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "科幻小说",
       "tags": [
         "灾难",
@@ -1793,12 +1793,12 @@
     },
     {
       "id": "hot-2026-024",
-      "title": "失落职业模拟器",
+      "title": "我每学一门旧手艺，就破一桩旧命案",
       "description": "主角获得一个职业模拟器，每次只能模拟一种即将消失的职业，如补锅匠、摆渡人、山货客、纸马匠和老式放映员；每完成一次模拟，他都会在现实中得到一条被遗忘的线索，主线是他通过这些冷门职业拼出一张横跨乡村、城市和家族旧案的隐秘地图，爽点来自职业细节和现实谜团的双线推进。",
       "audience": "male",
       "genre": "系统流",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "现代/都市",
       "tags": [
         "系统流",
@@ -1815,7 +1815,7 @@
       "audience": "male",
       "genre": "历史悬疑",
       "target_chapters": 100,
-      "target_word_count_wan": 60.0,
+      "target_word_count_wan": 60,
       "category": "历史小说",
       "tags": [
         "历史悬疑",
@@ -1827,7 +1827,7 @@
     },
     {
       "id": "hot-2026-026",
-      "title": "动物心声直播兽医",
+      "title": "被赶出豪门后，我靠听懂动物翻身",
       "description": "女主穿成真假千金文里被赶出豪门的真千金，发现自己能听懂动物心声，开局被迫在街边宠物诊所打工，她靠直播看诊救助动物意外爆红；当一只豪门宠物在直播间说出当年换婴真相，她发现自己的身世、豪门争产和宠物医疗黑产全连在一起，主线是用动物心声和直播舆论完成逆袭。",
       "audience": "female",
       "genre": "现代奇幻",

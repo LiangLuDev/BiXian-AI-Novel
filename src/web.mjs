@@ -668,7 +668,6 @@ function handleInit(body, { workspace, registry }) {
       if (!payload.target_chapters) payload.target_chapters = theme.target_chapters || 100;
       if (!payload.target_word_count_wan) payload.target_word_count_wan = theme.target_word_count_wan || 60.0;
       if (!audienceHint) audienceHint = theme.audience || '';
-      if (!payload.title) payload.title = theme.title || '';
       if (!payload.genre) payload.genre = theme.genre || '通用';
     }
   }
@@ -700,7 +699,6 @@ function spawnPublishMetaWorker(dir, projectId, description, audienceHint, regis
       const proj = new NovelProject(dir);
       const st = proj.load();
       st.publish_meta = meta;
-      if (!st.setup.title && meta.book_name) st.setup.title = meta.book_name;
       proj.save(st);
       registry.bus.emit('event', {
         type: 'state_updated', project_id: projectId, ts: Date.now(), publish_meta_ready: true,

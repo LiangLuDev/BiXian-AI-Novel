@@ -391,7 +391,6 @@ const WizardModal = ({ onClose, onCreated }) => {
       try {
         const initBody = mode === "theme" && selectedTheme ? {
           description: selectedTheme.description,
-          title: selectedTheme.title,
           genre: selectedTheme.genre || "通用",
           target_chapters: LENGTHS[length][1],
           target_word_count_wan: selectedTheme.target_word_count_wan || 60.0,
@@ -401,7 +400,6 @@ const WizardModal = ({ onClose, onCreated }) => {
           backend: backend,
         } : {
           description: desc.trim(),
-          title: draftTitleFromDescription(desc),
           genre: "通用",
           target_chapters: LENGTHS[length][1],
           generate_publish_meta_async: true,

@@ -5,7 +5,7 @@ import { NovelProject } from './project.mjs';
 import { LLM, LLMConfig } from './llm/index.mjs';
 import { Orchestrator, PipelineController, PipelineOptions, PipelineAbort } from './orchestrator.mjs';
 
-const MODES = new Set(['all', 'resume', 'setup', 'design', 'write', 'finalize']);
+const MODES = new Set(['all', 'resume', 'setup', 'design', 'write', 'finalize', 'continue']);
 
 function buildLlm(state) {
   const backend = state?.setup?.backend || 'codex';
@@ -84,7 +84,7 @@ export class TaskRegistry {
     this._pump();
   }
 
-  enqueue(projectId, { mode = 'all', fromChapter = 1, toChapter = null, cap = null } = {}) {
+  enqueue(projectId, { mode = 'all', fromChapter = 1, toChapter = null, cap = null, newTarget = null } = {}) {
     if (!MODES.has(mode)) throw new Error(`unknown mode: ${mode}`);
     const existing = this.tasks.get(projectId);
     if (existing && (existing.status === 'running' || existing.status === 'queued')) {
@@ -97,7 +97,7 @@ export class TaskRegistry {
       return this.stateOf(projectId);
     }
     const task = {
-      projectId, mode, fromChapter, toChapter, cap,
+      projectId, mode, fromChapter, toChapter, cap, newTarget,
       status: 'queued', paused: false, cancelled: false,
       currentAgent: null, currentChapter: null,
       controller: null, promise: null,
@@ -267,6 +267,7 @@ export class TaskRegistry {
       else if (task.mode === 'design') await orch.runDesign(state);
       else if (task.mode === 'write') await orch.runChapters(state, { fromChapter: task.fromChapter, toChapter: task.toChapter });
       else if (task.mode === 'finalize') await orch.runFinalize(state);
+      else if (task.mode === 'continue') await orch.runContinuation(state, { newTarget: task.newTarget });
       orch.flushUsageToState(state);
       proj.save(state);
       this._emit('pipeline_completed', projectId, { mode: task.mode });

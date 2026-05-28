@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { Chapter, ChapterDesign, Character, CharacterRelation, Hook, NovelState, ProjectSetup, PublishMeta, StyleGuide, Volume } from './state.mjs';
+import { Chapter, ChapterDesign, Character, CharacterRelation, Continuation, Hook, NovelState, ProjectSetup, PublishMeta, StyleGuide, Volume } from './state.mjs';
 
 const SAFE_RE = /[^\w一-鿿-]+/gu;
 const pad = (n, width = 3) => String(n).padStart(width, '0');
@@ -33,6 +33,7 @@ export class NovelProject {
       style_guide: state.style_guide,
       titles_proposed: state.titles_proposed,
       cover_image_path: state.cover_image_path,
+      continuations: state.continuations || [],
     });
     atomicWriteText(path.join(this.root, 'theme.md'), state.philosophical_theme || '');
     atomicWriteText(path.join(this.root, 'world.md'), state.world_building || '');
@@ -68,6 +69,7 @@ export class NovelProject {
       volumes: (readJson(path.join(this.root, 'volumes.json'), []) || []).map((v) => new Volume(v)),
       relations: (readJson(path.join(this.root, 'relations.json'), []) || []).map((r) => new CharacterRelation(r)),
       hooks: (readJson(path.join(this.root, 'hooks.json'), []) || []).map((h) => new Hook(h)),
+      continuations: (index.continuations || []).map((c) => new Continuation(c)),
       publish_meta: readJson(path.join(this.root, 'publish.json'), null),
       main_characters: this.#loadCharacterGroup('main'),
       secondary_characters: this.#loadCharacterGroup('secondary'),

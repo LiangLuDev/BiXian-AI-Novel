@@ -370,12 +370,7 @@ const AiBackendModal = ({ state, projectId, onClose, onSaved }) => {
 
 const CHAPTER_STEPS = [
   { key: "chapter_body", label: "正文写作", hint: "Codex 正在生成本章正文" },
-  { key: "qa_wc", label: "字数检查", hint: "检查章节字数与节奏" },
-  { key: "chapter_revise", label: "自动修订", hint: "必要时扩写或压缩" },
-  { key: "extract_new_chars", label: "新角色", hint: "提取本章新出场人物" },
-  { key: "extract_relations", label: "关系更新", hint: "更新人物关系变化" },
-  { key: "literary", label: "章节摘要", hint: "沉淀摘要供下一章使用" },
-  { key: "coref", label: "指代消解", hint: "可选正文清理" },
+  { key: "chapter_postprocess", label: "审稿入库", hint: "抽取摘要、角色、关系、伏笔并修正硬伤" },
 ];
 
 const chapterOrderFromAgent = (agent) => {
@@ -407,7 +402,7 @@ const ChapterStepProgress = ({ running, chapter, currentAgent }) => {
         <div className="fill" style={{ width: `${pct}%` }} />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 6 }}>
         {CHAPTER_STEPS.map((s, i) => {
           const done = activeIdx >= 0 && i < activeIdx;
           const active = i === effectiveIdx;

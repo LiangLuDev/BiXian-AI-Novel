@@ -100,6 +100,156 @@ function lengthRevisionNotes(issue, cjk, setup) {
   ].join('\n');
 }
 
+function knownCharactersText(state) {
+  const names = state.allCharacters().map((c) => c.name).filter(Boolean);
+  return names.length ? names.join('、') : '（暂无已知角色）';
+}
+
+function openHooksText(state, order = null) {
+  const hooks = state.openHooks(order);
+  if (!hooks.length) return '（暂无开放伏笔）';
+  return hooks.map((h) => `- ${h.id}: ${h.text}（第${h.planted_chapter}章埋下，half_life=${h.half_life}）`).join('\n');
+}
+
+function chapterQaVars(state, chapter) {
+  const order = Number(chapter.order || 0);
+  return setupVars(state, {
+    chapter_order: order,
+    chapter_title: chapter.design?.title || '',
+    chapter_design_text: state.chapterDesignTextFor(order) || chapter.design?.raw || '',
+    current_chapter: chapter.body || '',
+    chapter_excerpt: chapter.body || '',
+    known_characters: knownCharactersText(state),
+    open_hooks_text: openHooksText(state, order),
+    prev_chapter_block: state.prevChapterEnding(order),
+    recent_summaries_block: state.recentChapterSummaries(),
+    arcs: state.arcs || '',
+  });
+}
+
+function normalizeSeverity(report) {
+  return ['ok', 'warn', 'error'].includes(report?.severity) ? report.severity : 'ok';
+}
+
+function hardLintChapter(state, chapter) {
+  const issues = [];
+  const order = Number(chapter.order || 0);
+  for (const h of state.openHooks(order)) {
+    const planted = Number(h.planted_chapter || 0);
+    const halfLife = Math.max(1, Number(h.half_life || 10));
+    if (planted > 0 && order - planted > halfLife) {
+      issues.push({
+        severity: 'warn',
+        rule: 'hook_expired',
+        message: `伏笔 ${h.id} 已超过 half_life=${halfLife}（种于第 ${planted} 章；本章为第 ${order} 章）`,
+      });
+    }
+  }
+  return issues;
+}
+
+function collectQaFixHints(reports = {}) {
+  const lines = [];
+  for (const [name, report] of Object.entries(reports)) {
+    if (name === 'hard_lint' || name === 'literary' || name === 'wordcount' || name === 'auto_revise') continue;
+    if (normalizeSeverity(report) !== 'error') continue;
+    for (const issue of report.issues || []) {
+      const hint = String(issue.fix_hint || '').trim();
+      if (hint) lines.push(`- [${name}/${issue.kind || '问题'}] ${hint}`);
+    }
+  }
+  return lines;
+}
+
+function upsertRelation(list, relation) {
+  const rel = new CharacterRelation(relation);
+  if (!rel.a || !rel.b || !rel.relation) return null;
+  const key = (r) => [r.a, r.b, r.relation, r.description].map((x) => String(x || '').trim()).join('\u0001');
+  if (!list.some((r) => key(r) === key(rel))) list.push(rel);
+  return rel;
+}
+
+function applyChapterExtract(state, chapter, data = {}) {
+  const literary = data.literary || {};
+  chapter.qa_reports = { ...(chapter.qa_reports || {}), literary };
+  if (literary.summary) chapter.summary = String(literary.summary).trim();
+
+  const known = new Set(state.allCharacters().map((c) => c.name).filter(Boolean));
+  const added = [];
+  for (const raw of data.new_characters || []) {
+    const name = String(raw?.name || '').trim();
+    if (!name || known.has(name)) continue;
+    const card = new Character({
+      ...raw,
+      name,
+      tier: raw.tier === 'secondary' ? 'secondary' : 'minor',
+      role: String(raw.role || raw.tier || '新出场角色'),
+      first_chapter: chapter.order,
+      raw_card: [
+        `## ${name}`,
+        `- 层级：${raw.tier === 'secondary' ? '次要' : '小角色'}`,
+        raw.role ? `- 角色定位：${raw.role}` : '',
+        raw.personality_hint ? `- 性格线索：${raw.personality_hint}` : '',
+        raw.first_appearance_excerpt ? `- 首次出场：${raw.first_appearance_excerpt}` : '',
+      ].filter(Boolean).join('\n'),
+    });
+    state.secondary_characters.push(card);
+    chapter.new_characters.push(card);
+    known.add(name);
+    added.push(card);
+  }
+
+  const deltas = [];
+  for (const raw of [...(data.relations || []), ...(data.relation_deltas || [])]) {
+    const relation = upsertRelation(state.relations, {
+      a: String(raw?.a || '').trim(),
+      b: String(raw?.b || '').trim(),
+      relation: String(raw?.relation || raw?.change || '').trim(),
+      description: String(raw?.description || raw?.evidence || '').trim(),
+    });
+    if (relation) deltas.push(relation);
+  }
+  chapter.relations_delta = deltas;
+
+  for (const h of literary.hook_plants || []) {
+    const id = String(h?.id || '').trim();
+    const text = String(h?.text || '').trim();
+    if (id && text) state.plantHook({ id, text, planted_chapter: chapter.order, half_life: Number(h.half_life || 10) });
+  }
+  for (const id of literary.hook_resolves || []) {
+    state.resolveHook(String(id || '').trim(), chapter.order);
+  }
+  return { added, deltas };
+}
+
+async function extractChapterSignals(state, llm, chapter) {
+  if (typeof llm.chatJson !== 'function') return chapter;
+  const vars = chapterQaVars(state, chapter);
+  const [sys, usr] = renderPair('', P('qa/chapter_extract'), vars);
+  const data = await llm.chatJson(sys, usr, { agentName: `chapter_extract[${chapter.order}]` });
+  applyChapterExtract(state, chapter, data);
+  return chapter;
+}
+
+async function runChapterQaChecks(state, llm, chapter) {
+  if (typeof llm.chatJson !== 'function') return chapter.qa_reports || {};
+  const vars = chapterQaVars(state, chapter);
+  const reports = {
+    ...(chapter.qa_reports || {}),
+    hard_lint: hardLintChapter(state, chapter),
+  };
+  for (const [key, promptName] of [
+    ['arc', 'qa/arc_analyzer'],
+    ['foreshadow', 'qa/foreshadow_tracker'],
+    ['plot_coherence', 'qa/plot_coherence'],
+  ]) {
+    const [sys, usr] = renderPair('', P(promptName), vars);
+    reports[key] = await llm.chatJson(sys, usr, { agentName: `${key}[${chapter.order}]` });
+  }
+  chapter.qa_reports = reports;
+  return reports;
+}
+
 // ---------- setup-phase agents ----------
 export async function styleGuideAgent(state, llm) {
   const [sys, usr] = renderPair(P('style_guide/system'), P('style_guide/user'), setupVars(state));
@@ -292,6 +442,54 @@ export async function chapterBodyAgent(state, llm, order) {
     lastCjk = cjk;
   }
   throw new Error(`chapter ${order} body invalid after ${attempts} attempts: ${lastIssue}`);
+}
+
+export async function chapterPostprocessAgent(state, llm, order) {
+  let chapter = state.chapters.find((c) => c.order === order);
+  if (!chapter) throw new Error(`chapter ${order} not found for postprocess`);
+
+  const maxQaRevisions = typeof llm.chatJson === 'function' ? 2 : 0;
+
+  for (let attempt = 0; attempt <= maxQaRevisions; attempt += 1) {
+    const reports = await runChapterQaChecks(state, llm, chapter);
+    const fixHints = collectQaFixHints(reports);
+    if (!fixHints.length) {
+      await extractChapterSignals(state, llm, chapter);
+      return state;
+    }
+    if (attempt === maxQaRevisions) {
+      throw new Error(`chapter ${order} failed QA after ${maxQaRevisions} revisions: ${fixHints.join(' ')}`);
+    }
+
+    const vars = setupVars(state, {
+      chapter_order: order,
+      chapter_title: chapter.design?.title || '',
+      chapter_design_text: state.chapterDesignTextFor(order) || chapter.design?.raw || '',
+      original_body: chapter.body,
+      revision_notes: [
+        '以下是审稿发现的硬伤，必须修正；保持原主线、人物身份、生死状态和章节结尾钩子。',
+        ...fixHints,
+        `修订后仍必须落入 ${state.setup.per_chapter_min}-${state.setup.per_chapter_max} 个中文正文字符。`,
+      ].join('\n'),
+    });
+    const [sys, usr] = renderPair(P('chapter/revise_system'), P('chapter/revise_user'), vars);
+    const revised = await llm.chat(sys, usr, { agentName: `chapter_qa_revise_${attempt + 1}[${order}]`, longForm: true });
+    const revisedChapter = new Chapter({
+      ...chapter,
+      body: revised,
+      word_count: chapterBodyCjkCount(revised),
+      revisions: [...(chapter.revisions || []), chapter.body],
+      qa_reports: {},
+      new_characters: [],
+      relations_delta: [],
+    });
+    const issue = chapterBodyIssue(revisedChapter, state.setup, { strictRange: true });
+    if (issue) throw new Error(`chapter ${order} QA revision invalid: ${issue}`);
+    const index = state.chapters.findIndex((c) => c.order === order);
+    state.chapters[index] = revisedChapter;
+    chapter = revisedChapter;
+  }
+  return state;
 }
 
 export async function coverAgent(state, llm) {

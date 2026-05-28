@@ -187,6 +187,50 @@ assert.match(revisedCalls[1].user, /至少补充 1200/u);
 assert.match(revisedCalls[1].user, /优先贴近 3200/u);
 assert.match(revisedCalls[1].user, /禁止新增场景、人物、设定、时间跳跃或支线事件/u);
 
+const qaState = new NovelState({
+  setup: new ProjectSetup({ target_chapters: 1, per_chapter_min: 4, per_chapter_max: 100 }),
+  style_guide: new StyleGuide({ role: '作者' }),
+  philosophical_theme: '主题',
+  world_building: '世界',
+  outline: '大纲',
+  main_characters: [new Character({ name: '苏沉', raw_card: '# 苏沉' })],
+  chapter_designs: [new ChapterDesign({ order: 1, title: '遇见', raw: '## 第1章：遇见\n剧情' })],
+});
+const qaLlm = {
+  usageLog: [],
+  async chat() { return '苏沉遇见赵明。'; },
+  async chatJson(_system, _user, { agentName }) {
+    if (/chapter_extract/u.test(agentName)) {
+      return {
+        new_characters: [
+          { name: '赵明', tier: 'secondary', role: '线人', first_appearance_excerpt: '赵明递来纸条。', personality_hint: '谨慎' },
+        ],
+        relations: [{ a: '苏沉', b: '赵明', relation: '初识', evidence: '苏沉遇见赵明。' }],
+        relation_deltas: [],
+        literary: {
+          summary: '苏沉遇见赵明，拿到新的线索。',
+          tags: ['初识'],
+          key_events: ['苏沉遇见赵明'],
+          tone: '紧张',
+          hook_quality: 8,
+          hook_plants: [{ id: 'zhao_note', text: '赵明手里的纸条来源未明。', half_life: 3 }],
+          hook_resolves: [],
+        },
+      };
+    }
+    return { severity: 'ok', issues: [], summary: 'ok' };
+  },
+  setAbortSignal() {},
+  totalTokens() { return {}; },
+};
+await new Orchestrator(qaLlm, new PipelineOptions()).runChapters(qaState, { fromChapter: 1, toChapter: 1 });
+assert.equal(qaState.secondary_characters.some((c) => c.name === '赵明'), true);
+assert.equal(qaState.chapters[0].new_characters[0].name, '赵明');
+assert.equal(qaState.relations[0].relation, '初识');
+assert.equal(qaState.chapters[0].summary, '苏沉遇见赵明，拿到新的线索。');
+assert.equal(qaState.hooks[0].id, 'zhao_note');
+assert.equal(qaState.chapters[0].qa_reports.arc.severity, 'ok');
+
 const fakeCodex = path.join(tmp, 'fake-codex.mjs');
 fs.writeFileSync(fakeCodex, [
   '#!/usr/bin/env node',

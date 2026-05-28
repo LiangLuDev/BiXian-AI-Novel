@@ -3,7 +3,7 @@ import { estimateEntryCost } from './services/costing.mjs';
 import { NovelProject } from './project.mjs';
 import { isChapterBodyValid } from './state.mjs';
 import {
-  bookTitleAgent, chapterBodyAgent, chapterDesignFullAgent, chapterDesignRangeAgent, coverAgent, coverImageAgent,
+  bookTitleAgent, chapterBodyAgent, chapterDesignFullAgent, chapterDesignRangeAgent, chapterPostprocessAgent, coverAgent, coverImageAgent,
   mainArcsAgent, mainCharsAgent, outlineAgent, relationsAgent,
   secondaryArcsAgent, secondaryCharsAgent, styleGuideAgent, themeAgent, volumeAgent, worldAgent,
 } from './agents.mjs';
@@ -182,6 +182,7 @@ export class Orchestrator {
         this.controller.emit('chapter_started', { order });
       }
       await this._runAgent('chapter_body', chapterBodyAgent, state, [order]);
+      await this._runAgent('chapter_postprocess', chapterPostprocessAgent, state, [order]);
       const ch = state.chapters.find((c) => c.order === order);
       this.controller?.emit('chapter_completed', { order, word_count: ch?.word_count || 0 });
     }
